@@ -57,23 +57,23 @@ function ArtifactBody({ artifact }: { artifact: Artifact }) {
 
 export function ArtifactRenderer({ artifact }: { artifact: Artifact }) {
   return (
-    <div className="w-full rounded-lg border border-border bg-card overflow-hidden animate-expand">
-      <div className="flex items-center gap-2 px-3 py-2 border-b border-border bg-secondary/50">
-        <span className="text-[9px] font-mono uppercase tracking-wider text-muted-foreground">
+    <div className="w-full rounded-2xl border border-border bg-card overflow-hidden animate-expand shadow-sm">
+      <div className="flex items-center gap-2.5 px-4 py-2.5 border-b border-border bg-muted/50">
+        <span className="text-[10px] font-semibold uppercase tracking-wider text-primary">
           {typeLabels[artifact.type] || artifact.type.toUpperCase()}
         </span>
         {artifact.title && (
           <span className="text-xs text-foreground font-medium truncate">{artifact.title}</span>
         )}
-        <div className="ml-auto flex items-center gap-1">
-          <button className="p-1 rounded hover:bg-accent text-muted-foreground hover:text-foreground transition-colors" aria-label="Copy">
-            <Copy className="w-3 h-3" />
+        <div className="ml-auto flex items-center gap-0.5">
+          <button className="p-1.5 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground transition-colors" aria-label="Copy">
+            <Copy className="w-3.5 h-3.5" />
           </button>
-          <button className="p-1 rounded hover:bg-accent text-muted-foreground hover:text-foreground transition-colors" aria-label="Download">
-            <Download className="w-3 h-3" />
+          <button className="p-1.5 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground transition-colors" aria-label="Download">
+            <Download className="w-3.5 h-3.5" />
           </button>
-          <button className="p-1 rounded hover:bg-accent text-muted-foreground hover:text-foreground transition-colors" aria-label="Expand">
-            <Maximize2 className="w-3 h-3" />
+          <button className="p-1.5 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground transition-colors" aria-label="Expand">
+            <Maximize2 className="w-3.5 h-3.5" />
           </button>
         </div>
       </div>

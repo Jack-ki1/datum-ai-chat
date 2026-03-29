@@ -1,13 +1,15 @@
+import { Hexagon } from 'lucide-react';
+
 export function TypingIndicator() {
   return (
-    <div className="flex items-start gap-3 px-6 py-3 animate-fade-slide">
-      <div className="w-7 h-7 rounded-full bg-primary/20 border border-primary/30 flex items-center justify-center shrink-0">
-        <span className="text-[10px] font-bold text-primary">D</span>
+    <div className="flex items-start gap-3.5 px-6 py-4 animate-fade-slide">
+      <div className="w-8 h-8 rounded-xl bg-primary text-primary-foreground flex items-center justify-center shrink-0 shadow-sm">
+        <Hexagon className="w-4 h-4" strokeWidth={2.5} />
       </div>
-      <div className="flex items-center gap-1 pt-2">
-        <span className="w-[5px] h-[5px] rounded-full bg-primary animate-dot-1" />
-        <span className="w-[5px] h-[5px] rounded-full bg-primary animate-dot-2" />
-        <span className="w-[5px] h-[5px] rounded-full bg-primary animate-dot-3" />
+      <div className="flex items-center gap-1.5 pt-2.5">
+        <span className="w-[6px] h-[6px] rounded-full bg-primary/60 animate-dot-1" />
+        <span className="w-[6px] h-[6px] rounded-full bg-primary/60 animate-dot-2" />
+        <span className="w-[6px] h-[6px] rounded-full bg-primary/60 animate-dot-3" />
       </div>
     </div>
   );
