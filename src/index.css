@@ -4,48 +4,48 @@
 
 @layer base {
   :root {
-    --background: 220 26% 14%;
-    --foreground: 210 40% 96%;
-    --card: 220 25% 18%;
-    --card-foreground: 210 40% 96%;
-    --popover: 220 25% 18%;
-    --popover-foreground: 210 40% 96%;
-    --primary: 174 62% 47%;
-    --primary-foreground: 220 26% 10%;
-    --secondary: 220 24% 22%;
-    --secondary-foreground: 210 40% 96%;
-    --muted: 220 24% 22%;
-    --muted-foreground: 215 16% 57%;
-    --accent: 220 22% 26%;
-    --accent-foreground: 210 40% 96%;
+    --background: 210 20% 98%;
+    --foreground: 220 25% 12%;
+    --card: 0 0% 100%;
+    --card-foreground: 220 25% 12%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 220 25% 12%;
+    --primary: 221 83% 53%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 214 32% 91%;
+    --secondary-foreground: 220 25% 12%;
+    --muted: 220 14% 96%;
+    --muted-foreground: 220 9% 46%;
+    --accent: 210 40% 96%;
+    --accent-foreground: 220 25% 12%;
     --destructive: 0 84% 60%;
-    --destructive-foreground: 210 40% 96%;
-    --border: 220 20% 28%;
-    --input: 220 20% 28%;
-    --ring: 174 62% 47%;
-    --radius: 0.5rem;
+    --destructive-foreground: 0 0% 100%;
+    --border: 220 13% 91%;
+    --input: 220 13% 91%;
+    --ring: 221 83% 53%;
+    --radius: 0.75rem;
 
-    --datum-surf: 220 24% 22%;
-    --datum-raised: 220 22% 26%;
-    --datum-border-2: 220 18% 32%;
+    --datum-surf: 220 14% 96%;
+    --datum-raised: 0 0% 100%;
+    --datum-border-2: 220 13% 86%;
     --datum-amber: 25 95% 53%;
-    --datum-cyan: 174 62% 47%;
-    --datum-violet: 258 89% 76%;
-    --datum-green: 142 69% 58%;
+    --datum-cyan: 199 89% 48%;
+    --datum-violet: 258 70% 58%;
+    --datum-green: 152 69% 41%;
     --datum-red: 0 84% 60%;
     --datum-orange: 25 95% 53%;
-    --datum-pink: 330 82% 71%;
-    --datum-text-2: 215 16% 57%;
-    --datum-text-3: 220 18% 32%;
+    --datum-pink: 330 82% 60%;
+    --datum-text-2: 220 9% 46%;
+    --datum-text-3: 220 13% 72%;
 
-    --sidebar-background: 220 28% 12%;
-    --sidebar-foreground: 215 16% 57%;
-    --sidebar-primary: 174 62% 47%;
-    --sidebar-primary-foreground: 220 26% 10%;
-    --sidebar-accent: 220 22% 26%;
-    --sidebar-accent-foreground: 210 40% 96%;
-    --sidebar-border: 220 20% 28%;
-    --sidebar-ring: 174 62% 47%;
+    --sidebar-background: 0 0% 100%;
+    --sidebar-foreground: 220 9% 46%;
+    --sidebar-primary: 221 83% 53%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 210 40% 96%;
+    --sidebar-accent-foreground: 220 25% 12%;
+    --sidebar-border: 220 13% 91%;
+    --sidebar-ring: 221 83% 53%;
   }
 }
 
@@ -54,8 +54,8 @@
     @apply border-border;
   }
   body {
-    @apply bg-background text-foreground;
-    font-family: 'DM Sans', sans-serif;
+    @apply bg-background text-foreground antialiased;
+    font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
   }
   h1, h2, h3, h4, h5, h6 {
     font-family: 'Syne', sans-serif;
@@ -67,38 +67,42 @@
 
 /* Custom scrollbar */
 ::-webkit-scrollbar {
-  width: 3px;
-  height: 3px;
+  width: 4px;
+  height: 4px;
 }
 ::-webkit-scrollbar-track {
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
   background: hsl(var(--datum-border-2));
-  border-radius: 3px;
+  border-radius: 4px;
 }
 
 /* Focus ring */
 *:focus-visible {
   outline: none;
-  box-shadow: 0 0 0 2px rgba(45, 185, 170, 0.3);
+  box-shadow: 0 0 0 2px hsl(221 83% 53% / 0.25);
 }
 
 /* Animations */
 @keyframes fadeSlideIn {
-  from { opacity: 0.85; transform: translateY(6px); }
+  from { opacity: 0; transform: translateY(8px); }
   to { opacity: 1; transform: translateY(0); }
 }
 @keyframes expandIn {
-  from { opacity: 0.7; transform: scale(0.97); }
+  from { opacity: 0; transform: scale(0.96); }
   to { opacity: 1; transform: scale(1); }
 }
 @keyframes bounce-dot {
   0%, 100% { transform: translateY(0); }
   50% { transform: translateY(-4px); }
 }
-.animate-fade-slide { animation: fadeSlideIn 0.2s ease; }
-.animate-expand { animation: expandIn 0.18s ease; }
-.animate-dot-1 { animation: bounce-dot 0.6s ease-in-out infinite; }
-.animate-dot-2 { animation: bounce-dot 0.6s ease-in-out 0.14s infinite; }
-.animate-dot-3 { animation: bounce-dot 0.6s ease-in-out 0.28s infinite; }
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+.animate-fade-slide { animation: fadeSlideIn 0.3s ease-out; }
+.animate-expand { animation: expandIn 0.25s ease-out; }
+.animate-dot-1 { animation: bounce-dot 0.7s ease-in-out infinite; }
+.animate-dot-2 { animation: bounce-dot 0.7s ease-in-out 0.14s infinite; }
+.animate-dot-3 { animation: bounce-dot 0.7s ease-in-out 0.28s infinite; }

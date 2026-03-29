@@ -10,18 +10,18 @@ export function Topbar() {
   const catCols = profile?.filter(p => p.type === 'categorical').length || 0;
 
   return (
-    <header className="h-12 min-h-[48px] flex items-center gap-3 px-4 border-b border-border bg-secondary">
-      <button onClick={toggleSidebar} className="text-muted-foreground hover:text-foreground transition-colors">
-        {sidebarOpen ? <PanelLeftClose className="w-4 h-4" /> : <PanelLeft className="w-4 h-4" />}
+    <header className="h-14 min-h-[56px] flex items-center gap-4 px-5 border-b border-border bg-card/80 backdrop-blur-sm">
+      <button onClick={toggleSidebar} className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors">
+        {sidebarOpen ? <PanelLeftClose className="w-[18px] h-[18px]" /> : <PanelLeft className="w-[18px] h-[18px]" />}
       </button>
 
-      <span className="text-sm font-medium text-foreground truncate">
+      <span className="text-sm font-semibold text-foreground truncate">
         {session?.title || 'New Session'}
       </span>
 
       {isLoaded && (
-        <div className="flex items-center gap-1.5 ml-auto">
-          <Chip color="amber">{fileName}</Chip>
+        <div className="flex items-center gap-2 ml-auto">
+          <Chip color="blue">{fileName}</Chip>
           <Chip color="cyan">{formatNumber(dataset?.length || 0)} rows</Chip>
           <Chip color="violet">{profile?.length} cols</Chip>
           {numCols > 0 && <Chip color="amber">{numCols} numeric</Chip>}
@@ -37,14 +37,15 @@ export function Topbar() {
 
 function Chip({ children, color }: { children: React.ReactNode; color: string }) {
   const colorMap: Record<string, string> = {
-    amber: 'text-datum-amber bg-datum-amber/8 border-datum-amber/18',
-    cyan: 'text-datum-cyan bg-datum-cyan/8 border-datum-cyan/18',
-    violet: 'text-datum-violet bg-datum-violet/8 border-datum-violet/18',
-    green: 'text-datum-green bg-datum-green/8 border-datum-green/18',
-    red: 'text-datum-red bg-datum-red/8 border-datum-red/18',
+    blue: 'text-primary bg-primary/8 border-primary/15',
+    amber: 'text-datum-amber bg-datum-amber/8 border-datum-amber/15',
+    cyan: 'text-datum-cyan bg-datum-cyan/8 border-datum-cyan/15',
+    violet: 'text-datum-violet bg-datum-violet/8 border-datum-violet/15',
+    green: 'text-datum-green bg-datum-green/8 border-datum-green/15',
+    red: 'text-datum-red bg-datum-red/8 border-datum-red/15',
   };
   return (
-    <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-mono border ${colorMap[color] || colorMap.amber}`}>
+    <span className={`inline-flex items-center px-2.5 py-1 rounded-lg text-[10px] font-medium border ${colorMap[color] || colorMap.blue}`}>
       {children}
     </span>
   );
