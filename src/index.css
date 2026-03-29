@@ -81,7 +81,7 @@
 /* Focus ring */
 *:focus-visible {
   outline: none;
-  box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.3);
+  box-shadow: 0 0 0 2px rgba(45, 185, 170, 0.3);
 }
 
 /* Animations */
