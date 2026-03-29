@@ -237,4 +237,3 @@ const RULES = `## CRITICAL RULES
 13. For anomalies, always explain business impact, not just statistical significance
 14. When writing SQL, prefer CTEs over subqueries, add comments for complex logic
 15. If data quality issues exist, flag them BEFORE answering the main question`;
-}
