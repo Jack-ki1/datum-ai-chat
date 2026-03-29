@@ -2,95 +2,50 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
-All colors MUST be HSL.
-*/
-
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
-
-    --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
-
-    --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
-
-    --primary: 222.2 47.4% 11.2%;
-    --primary-foreground: 210 40% 98%;
-
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
-
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
-
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
-
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
-
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
-
+    --background: 240 43% 4%;
+    --foreground: 226 100% 97%;
+    --card: 240 42% 9%;
+    --card-foreground: 226 100% 97%;
+    --popover: 240 42% 9%;
+    --popover-foreground: 226 100% 97%;
+    --primary: 38 92% 50%;
+    --primary-foreground: 240 43% 4%;
+    --secondary: 240 41% 7%;
+    --secondary-foreground: 226 100% 97%;
+    --muted: 240 41% 7%;
+    --muted-foreground: 222 17% 61%;
+    --accent: 240 38% 11%;
+    --accent-foreground: 226 100% 97%;
+    --destructive: 0 94% 71%;
+    --destructive-foreground: 226 100% 97%;
+    --border: 240 43% 16%;
+    --input: 240 43% 16%;
+    --ring: 38 92% 50%;
     --radius: 0.5rem;
 
-    --sidebar-background: 0 0% 98%;
+    --datum-surf: 240 41% 7%;
+    --datum-raised: 240 38% 11%;
+    --datum-border-2: 240 36% 21%;
+    --datum-amber: 38 92% 50%;
+    --datum-cyan: 187 82% 53%;
+    --datum-violet: 258 89% 76%;
+    --datum-green: 142 69% 58%;
+    --datum-red: 0 94% 71%;
+    --datum-orange: 25 95% 61%;
+    --datum-pink: 330 82% 71%;
+    --datum-text-2: 222 17% 61%;
+    --datum-text-3: 240 31% 27%;
 
-    --sidebar-foreground: 240 5.3% 26.1%;
-
-    --sidebar-primary: 240 5.9% 10%;
-
-    --sidebar-primary-foreground: 0 0% 98%;
-
-    --sidebar-accent: 240 4.8% 95.9%;
-
-    --sidebar-accent-foreground: 240 5.9% 10%;
-
-    --sidebar-border: 220 13% 91%;
-
-    --sidebar-ring: 217.2 91.2% 59.8%;
-  }
-
-  .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
-
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
-
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
-
-    --primary: 210 40% 98%;
-    --primary-foreground: 222.2 47.4% 11.2%;
-
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
-
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
-
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
-
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
-
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 212.7 26.8% 83.9%;
-    --sidebar-background: 240 5.9% 10%;
-    --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 224.3 76.3% 48%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 3.7% 15.9%;
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --sidebar-background: 240 41% 7%;
+    --sidebar-foreground: 222 17% 61%;
+    --sidebar-primary: 38 92% 50%;
+    --sidebar-primary-foreground: 240 43% 4%;
+    --sidebar-accent: 240 38% 11%;
+    --sidebar-accent-foreground: 226 100% 97%;
+    --sidebar-border: 240 43% 16%;
+    --sidebar-ring: 38 92% 50%;
   }
 }
 
@@ -98,8 +53,52 @@ All colors MUST be HSL.
   * {
     @apply border-border;
   }
-
   body {
     @apply bg-background text-foreground;
+    font-family: 'DM Sans', sans-serif;
+  }
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Syne', sans-serif;
+  }
+  code, pre, .font-mono {
+    font-family: 'JetBrains Mono', monospace;
   }
 }
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 3px;
+  height: 3px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: hsl(var(--datum-border-2));
+  border-radius: 3px;
+}
+
+/* Focus ring */
+*:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.3);
+}
+
+/* Animations */
+@keyframes fadeSlideIn {
+  from { opacity: 0.85; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes expandIn {
+  from { opacity: 0.7; transform: scale(0.97); }
+  to { opacity: 1; transform: scale(1); }
+}
+@keyframes bounce-dot {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-4px); }
+}
+.animate-fade-slide { animation: fadeSlideIn 0.2s ease; }
+.animate-expand { animation: expandIn 0.18s ease; }
+.animate-dot-1 { animation: bounce-dot 0.6s ease-in-out infinite; }
+.animate-dot-2 { animation: bounce-dot 0.6s ease-in-out 0.14s infinite; }
+.animate-dot-3 { animation: bounce-dot 0.6s ease-in-out 0.28s infinite; }
