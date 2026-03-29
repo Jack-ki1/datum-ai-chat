@@ -4,48 +4,48 @@
 
 @layer base {
   :root {
-    --background: 240 43% 4%;
-    --foreground: 226 100% 97%;
-    --card: 240 42% 9%;
-    --card-foreground: 226 100% 97%;
-    --popover: 240 42% 9%;
-    --popover-foreground: 226 100% 97%;
-    --primary: 38 92% 50%;
-    --primary-foreground: 240 43% 4%;
-    --secondary: 240 41% 7%;
-    --secondary-foreground: 226 100% 97%;
-    --muted: 240 41% 7%;
-    --muted-foreground: 222 17% 61%;
-    --accent: 240 38% 11%;
-    --accent-foreground: 226 100% 97%;
-    --destructive: 0 94% 71%;
-    --destructive-foreground: 226 100% 97%;
-    --border: 240 43% 16%;
-    --input: 240 43% 16%;
-    --ring: 38 92% 50%;
+    --background: 220 26% 14%;
+    --foreground: 210 40% 96%;
+    --card: 220 25% 18%;
+    --card-foreground: 210 40% 96%;
+    --popover: 220 25% 18%;
+    --popover-foreground: 210 40% 96%;
+    --primary: 174 62% 47%;
+    --primary-foreground: 220 26% 10%;
+    --secondary: 220 24% 22%;
+    --secondary-foreground: 210 40% 96%;
+    --muted: 220 24% 22%;
+    --muted-foreground: 215 16% 57%;
+    --accent: 220 22% 26%;
+    --accent-foreground: 210 40% 96%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 210 40% 96%;
+    --border: 220 20% 28%;
+    --input: 220 20% 28%;
+    --ring: 174 62% 47%;
     --radius: 0.5rem;
 
-    --datum-surf: 240 41% 7%;
-    --datum-raised: 240 38% 11%;
-    --datum-border-2: 240 36% 21%;
-    --datum-amber: 38 92% 50%;
-    --datum-cyan: 187 82% 53%;
+    --datum-surf: 220 24% 22%;
+    --datum-raised: 220 22% 26%;
+    --datum-border-2: 220 18% 32%;
+    --datum-amber: 25 95% 53%;
+    --datum-cyan: 174 62% 47%;
     --datum-violet: 258 89% 76%;
     --datum-green: 142 69% 58%;
-    --datum-red: 0 94% 71%;
-    --datum-orange: 25 95% 61%;
+    --datum-red: 0 84% 60%;
+    --datum-orange: 25 95% 53%;
     --datum-pink: 330 82% 71%;
-    --datum-text-2: 222 17% 61%;
-    --datum-text-3: 240 31% 27%;
+    --datum-text-2: 215 16% 57%;
+    --datum-text-3: 220 18% 32%;
 
-    --sidebar-background: 240 41% 7%;
-    --sidebar-foreground: 222 17% 61%;
-    --sidebar-primary: 38 92% 50%;
-    --sidebar-primary-foreground: 240 43% 4%;
-    --sidebar-accent: 240 38% 11%;
-    --sidebar-accent-foreground: 226 100% 97%;
-    --sidebar-border: 240 43% 16%;
-    --sidebar-ring: 38 92% 50%;
+    --sidebar-background: 220 28% 12%;
+    --sidebar-foreground: 215 16% 57%;
+    --sidebar-primary: 174 62% 47%;
+    --sidebar-primary-foreground: 220 26% 10%;
+    --sidebar-accent: 220 22% 26%;
+    --sidebar-accent-foreground: 210 40% 96%;
+    --sidebar-border: 220 20% 28%;
+    --sidebar-ring: 174 62% 47%;
   }
 }
 
@@ -81,7 +81,7 @@
 /* Focus ring */
 *:focus-visible {
   outline: none;
-  box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.3);
+  box-shadow: 0 0 0 2px rgba(45, 185, 170, 0.3);
 }
 
 /* Animations */
