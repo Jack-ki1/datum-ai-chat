@@ -49,3 +49,11 @@ export interface Session {
   createdAt: string;
   messages: ChatMessage[];
 }
+
+export interface ChangelogEntry {
+  id: string;
+  action: 'upload' | 'transform' | 'filter' | 'drop' | 'chart' | 'analysis' | 'other';
+  description: string;
+  timestamp: string;
+  data?: Record<string, any>;
+}
