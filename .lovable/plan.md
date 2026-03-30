@@ -1,61 +1,64 @@
 
 
-# UI Enhancements: Data Viewer Buttons + Changelog Sidebar
+# Sample Prompts Page + InputBar Updates + Scrollability Fixes
 
-## 1. "Original" & "Transformed" Buttons in Topbar
+## 1. Sample Prompts Button in Sidebar + Prompts Page
 
-**What:** Two toggle buttons appear in the top-right of the Topbar after a dataset is uploaded. Clicking either navigates to a **Data Viewer page** showing that version of the data.
+**Sidebar change** (`src/components/layout/Sidebar.tsx`): Add a "Sample Prompts" button below the "+ New Chat" button that navigates to `/prompts`.
 
-**New page: `/data/:view` (Original or Transformed)**
+**New page** (`src/pages/SamplePrompts.tsx`): A full page wrapped in `AppShell` with 5 tabbed sections:
+- **Data Analysis** (50+ prompts)
+- **Data Science** (50+ prompts)
+- **Data Engineering** (50+ prompts)
+- **MLOps** (50+ prompts)
+- **Others** (50+ prompts)
 
-The Data Viewer page contains four sections in a tabbed layout:
-- **Data Table** — full scrollable view of the dataset
-- **Visuals** — auto-generated distribution charts (histograms for numeric, bar charts for categorical), scatter matrix for top correlated pairs
-- **Report** — detailed data quality report (completeness, types, outliers, correlations) with a **Download** button (PDF or PPTX via the AI)
-- **Upload** — drag-and-drop CSV/XLSX upload area to replace/load data
+Each section displays prompts as clickable cards in a scrollable grid. Clicking a prompt navigates to `/chat` and sends it (or pre-fills the input). Prompts stored in a new file `src/lib/sample-prompts.ts`.
 
-**Store changes:** Add `transformedDataset` and `activeView` ('original' | 'transformed') to `DatumStore`. The "Transformed" dataset starts as null and gets populated when the AI modifies data (or user uploads a second file).
+**New route** in `src/App.tsx`: `/prompts` → `SamplePrompts`.
 
-### Files to create/modify:
-- **Create** `src/pages/DataViewer.tsx` — the full data viewer page with tabs
-- **Create** `src/components/data-viewer/DataTable.tsx` — scrollable table
-- **Create** `src/components/data-viewer/DataVisuals.tsx` — auto-generated charts (histograms, bar charts, scatter)
-- **Create** `src/components/data-viewer/DataReport.tsx` — detailed profile report with download button
-- **Create** `src/components/data-viewer/DataUpload.tsx` — CSV upload section
-- **Modify** `src/components/layout/Topbar.tsx` — add Original/Transformed buttons (visible when `isLoaded`)
-- **Modify** `src/store/datum.store.ts` — add `transformedDataset`, `activeView`, and setters
-- **Modify** `src/App.tsx` — add `/data/:view` route
-
----
-
-## 2. Changelog Sidebar (Right Side)
-
-**What:** A collapsible right-side panel on the Chat page that logs every data transformation or AI action as a timeline. Users can click entries to revisit, reorder, or remove them.
-
-**Entries tracked:** dataset uploads, AI-generated transformations, column drops, filters applied, chart generations — each with timestamp and description.
-
-### Files to create/modify:
-- **Create** `src/components/layout/ChangelogSidebar.tsx` — collapsible right panel with a vertical timeline of changelog entries. Each entry shows an icon, description, and timestamp. Entries are draggable/reorderable and deletable.
-- **Modify** `src/store/datum.store.ts` — add `changelog: ChangelogEntry[]`, `changelogOpen: boolean`, `toggleChangelog()`, `addChangelogEntry()`, `removeChangelogEntry()`, `reorderChangelog()`
-- **Modify** `src/types/index.ts` — add `ChangelogEntry` type (`id`, `action`, `description`, `timestamp`, `data?`)
-- **Modify** `src/components/layout/AppShell.tsx` — render `ChangelogSidebar` on the right side of the main content area
-- **Modify** `src/components/layout/Topbar.tsx` — add a changelog toggle button (clock/history icon)
-
----
-
-## Summary of All File Changes
-
+### Files:
 | Action | File |
 |--------|------|
-| Create | `src/pages/DataViewer.tsx` |
-| Create | `src/components/data-viewer/DataTable.tsx` |
-| Create | `src/components/data-viewer/DataVisuals.tsx` |
-| Create | `src/components/data-viewer/DataReport.tsx` |
-| Create | `src/components/data-viewer/DataUpload.tsx` |
-| Create | `src/components/layout/ChangelogSidebar.tsx` |
-| Modify | `src/components/layout/Topbar.tsx` |
-| Modify | `src/components/layout/AppShell.tsx` |
-| Modify | `src/store/datum.store.ts` |
-| Modify | `src/types/index.ts` |
-| Modify | `src/App.tsx` |
+| Create | `src/lib/sample-prompts.ts` — 250+ prompts organized by category |
+| Create | `src/pages/SamplePrompts.tsx` — tabbed page with prompt cards |
+| Modify | `src/components/layout/Sidebar.tsx` — add Sample Prompts button |
+| Modify | `src/App.tsx` — add `/prompts` route |
+
+---
+
+## 2. InputBar Quick Actions Update
+
+Replace "Chart" and "Anomalies" buttons with "Model", "Analyze", "Engineer", "MLOps" in `src/components/chat/InputBar.tsx`.
+
+- **Profile** (keep) → `Profile all columns in detail`
+- **Model** (new) → `Suggest and build the best ML model for this data`
+- **Analyze** (new) → `Run a comprehensive statistical analysis on this dataset`
+- **Engineer** (new) → `Design a data pipeline and feature engineering plan`
+- **MLOps** (new) → `Create a deployment and monitoring plan for this data workflow`
+
+### Files:
+| Action | File |
+|--------|------|
+| Modify | `src/components/chat/InputBar.tsx` — swap quick action buttons |
+
+---
+
+## 3. Scrollability Fixes
+
+Ensure all pages scroll properly top-to-bottom:
+- `ChatWindow.tsx` — already has `overflow-y-auto` on scroll container (verify)
+- `DataViewer.tsx` — already has `overflow-auto` (verify)
+- `SamplePrompts.tsx` — build with `overflow-y-auto` on main content
+- `AppShell.tsx` — ensure main area allows overflow scrolling
+
+### Files:
+| Action | File |
+|--------|------|
+| Modify | `src/components/layout/AppShell.tsx` — ensure `overflow-y-auto` on main |
+| Modify | `src/pages/DataViewer.tsx` — confirm scrollability |
+
+---
+
+## Total: 4 files created/modified, 2 new files
 
