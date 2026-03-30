@@ -1,9 +1,12 @@
 import { useDatumStore } from '@/store/datum.store';
-import { PanelLeftClose, PanelLeft } from 'lucide-react';
+import { PanelLeftClose, PanelLeft, Clock, Database, Layers } from 'lucide-react';
 import { formatNumber, healthScore } from '@/lib/stats';
+import { useNavigate } from 'react-router-dom';
+import { Button } from '@/components/ui/button';
 
 export function Topbar() {
-  const { fileName, isLoaded, dataset, profile, sidebarOpen, toggleSidebar, sessions, activeSessionId } = useDatumStore();
+  const { fileName, isLoaded, dataset, profile, sidebarOpen, toggleSidebar, sessions, activeSessionId, changelogOpen, toggleChangelog } = useDatumStore();
+  const navigate = useNavigate();
   const session = sessions.find(s => s.id === activeSessionId);
   const health = profile ? healthScore(profile) : 0;
   const numCols = profile?.filter(p => p.type === 'numeric').length || 0;
@@ -29,8 +32,23 @@ export function Topbar() {
           <Chip color={health >= 90 ? 'green' : health >= 70 ? 'amber' : 'red'}>
             ♥ {health}%
           </Chip>
+
+          <div className="h-5 w-px bg-border mx-1" />
+
+          <Button size="sm" variant="outline" onClick={() => navigate('/data/original')} className="gap-1.5 text-[11px] h-7 px-2.5 rounded-lg">
+            <Database className="w-3 h-3" /> Original
+          </Button>
+          <Button size="sm" variant="outline" onClick={() => navigate('/data/transformed')} className="gap-1.5 text-[11px] h-7 px-2.5 rounded-lg">
+            <Layers className="w-3 h-3" /> Transformed
+          </Button>
         </div>
       )}
+
+      {!isLoaded && <div className="ml-auto" />}
+
+      <button onClick={toggleChangelog} className={`p-1.5 rounded-lg transition-colors ${changelogOpen ? 'text-primary bg-primary/10' : 'text-muted-foreground hover:text-foreground hover:bg-muted'}`}>
+        <Clock className="w-[18px] h-[18px]" />
+      </button>
     </header>
   );
 }
