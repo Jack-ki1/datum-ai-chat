@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import type { ChatMessage, ColumnProfile, Session, Artifact } from '@/types';
+import type { ChatMessage, ColumnProfile, Session, Artifact, ChangelogEntry } from '@/types';
 import { buildProfile, healthScore, formatNumber } from '@/lib/stats';
 import { buildDatasetContext } from '@/lib/context-builder';
 import { streamChat } from '@/lib/streaming';
@@ -10,6 +10,8 @@ function now() { return new Date().toISOString(); }
 
 interface DatumStore {
   dataset: Record<string, any>[] | null;
+  transformedDataset: Record<string, any>[] | null;
+  activeView: 'original' | 'transformed';
   profile: ColumnProfile[] | null;
   fileName: string;
   isLoaded: boolean;
@@ -18,11 +20,18 @@ interface DatumStore {
   messages: ChatMessage[];
   isAiLoading: boolean;
   sidebarOpen: boolean;
+  changelog: ChangelogEntry[];
+  changelogOpen: boolean;
   ingest: (data: Record<string, any>[], name: string) => void;
   sendMessage: (content: string) => Promise<void>;
   newSession: () => void;
   setActiveSession: (id: string) => void;
   toggleSidebar: () => void;
+  setActiveView: (view: 'original' | 'transformed') => void;
+  setTransformedDataset: (data: Record<string, any>[]) => void;
+  toggleChangelog: () => void;
+  addChangelogEntry: (action: ChangelogEntry['action'], description: string) => void;
+  removeChangelogEntry: (id: string) => void;
 }
 
 function generateWelcome(data: Record<string, any>[], profile: ColumnProfile[], fileName: string): ChatMessage {
@@ -59,18 +68,22 @@ function generateWelcome(data: Record<string, any>[], profile: ColumnProfile[], 
 export const useDatumStore = create<DatumStore>((set, get) => {
   const initialSessionId = uid();
   return {
-    dataset: null, profile: null, fileName: '', isLoaded: false,
+    dataset: null, transformedDataset: null, activeView: 'original' as const,
+    profile: null, fileName: '', isLoaded: false,
     sessions: [{ id: initialSessionId, title: 'New Session', createdAt: now(), messages: [] }],
     activeSessionId: initialSessionId,
     messages: [], isAiLoading: false, sidebarOpen: true,
+    changelog: [], changelogOpen: false,
 
     ingest: (data, name) => {
       const profile = buildProfile(data);
       const welcome = generateWelcome(data, profile, name);
       const { activeSessionId, sessions } = get();
       const msgs = [welcome];
+      const entry: ChangelogEntry = { id: uid(), action: 'upload', description: `Uploaded ${name} (${data.length} rows)`, timestamp: now() };
       set({
         dataset: data, profile, fileName: name, isLoaded: true, messages: msgs,
+        changelog: [...get().changelog, entry],
         sessions: sessions.map(s => s.id === activeSessionId
           ? { ...s, title: name.replace(/\.\w+$/, ''), fileName: name, rowCount: data.length, colCount: Object.keys(data[0] || {}).length, messages: msgs }
           : s),
@@ -199,5 +212,14 @@ export const useDatumStore = create<DatumStore>((set, get) => {
     },
 
     toggleSidebar: () => set(s => ({ sidebarOpen: !s.sidebarOpen })),
+    setActiveView: (view) => set({ activeView: view }),
+    setTransformedDataset: (data) => set({ transformedDataset: data }),
+    toggleChangelog: () => set(s => ({ changelogOpen: !s.changelogOpen })),
+    addChangelogEntry: (action, description) => set(s => ({
+      changelog: [...s.changelog, { id: uid(), action, description, timestamp: now() }],
+    })),
+    removeChangelogEntry: (id) => set(s => ({
+      changelog: s.changelog.filter(e => e.id !== id),
+    })),
   };
 });

@@ -1,5 +1,6 @@
 import { Sidebar } from './Sidebar';
 import { Topbar } from './Topbar';
+import { ChangelogSidebar } from './ChangelogSidebar';
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   return (
@@ -7,7 +8,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       <Sidebar />
       <div className="flex-1 flex flex-col min-w-0">
         <Topbar />
-        <main className="flex-1 overflow-hidden bg-muted/30">{children}</main>
+        <div className="flex-1 flex overflow-hidden">
+          <main className="flex-1 overflow-hidden bg-muted/30">{children}</main>
+          <ChangelogSidebar />
+        </div>
       </div>
     </div>
   );
