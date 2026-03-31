@@ -6,6 +6,7 @@ import Index from "./pages/Index";
 import Chat from "./pages/Chat";
 import DataViewer from "./pages/DataViewer";
 import NotFound from "./pages/NotFound";
+import SamplePrompts from "./pages/SamplePrompts";
 
 const queryClient = new QueryClient();
 
@@ -19,6 +20,7 @@ const App = () => (
           <Route path="/chat" element={<Chat />} />
           <Route path="/chat/:sessionId" element={<Chat />} />
           <Route path="/data/:view" element={<DataViewer />} />
+          <Route path="/prompts" element={<SamplePrompts />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>

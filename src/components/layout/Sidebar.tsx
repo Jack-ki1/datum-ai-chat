@@ -1,8 +1,10 @@
 import { useDatumStore } from '@/store/datum.store';
-import { MessageSquare, Database, Plus, Search, Hexagon } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { MessageSquare, Database, Plus, Search, Hexagon, BookOpen } from 'lucide-react';
 
 export function Sidebar() {
   const { sessions, activeSessionId, setActiveSession, newSession, fileName, isLoaded, dataset, profile, sidebarOpen } = useDatumStore();
+  const navigate = useNavigate();
 
   if (!sidebarOpen) return null;
 
@@ -26,6 +28,14 @@ export function Sidebar() {
         <button onClick={newSession}
           className="w-full flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl bg-primary text-primary-foreground text-sm font-medium shadow-sm hover:shadow-md hover:brightness-105 transition-all duration-200">
           <Plus className="w-4 h-4" /> New Chat
+        </button>
+      </div>
+
+      {/* Sample Prompts */}
+      <div className="px-4 pb-3">
+        <button onClick={() => navigate('/prompts')}
+          className="w-full flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl border border-border text-foreground text-sm font-medium hover:bg-muted transition-all duration-200">
+          <BookOpen className="w-4 h-4" /> Sample Prompts
         </button>
       </div>
 

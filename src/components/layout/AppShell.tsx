@@ -9,7 +9,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       <div className="flex-1 flex flex-col min-w-0">
         <Topbar />
         <div className="flex-1 flex overflow-hidden">
-          <main className="flex-1 overflow-hidden bg-muted/30">{children}</main>
+          <main className="flex-1 overflow-y-auto bg-muted/30">{children}</main>
           <ChangelogSidebar />
         </div>
       </div>
