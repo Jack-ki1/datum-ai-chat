@@ -31,6 +31,14 @@ export function Sidebar() {
         </button>
       </div>
 
+      {/* Sample Prompts */}
+      <div className="px-4 pb-3">
+        <button onClick={() => navigate('/prompts')}
+          className="w-full flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl border border-border text-foreground text-sm font-medium hover:bg-muted transition-all duration-200">
+          <BookOpen className="w-4 h-4" /> Sample Prompts
+        </button>
+      </div>
+
       {/* Search */}
       <div className="px-4 pb-3">
         <div className="flex items-center gap-2.5 px-3 py-2 rounded-lg bg-muted text-muted-foreground text-xs">

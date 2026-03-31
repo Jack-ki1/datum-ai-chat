@@ -79,13 +79,21 @@ export function InputBar({ onSend }: { onSend?: (text: string) => void }) {
                 className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-medium text-muted-foreground hover:text-foreground hover:bg-muted transition-colors">
                 <Sparkles className="w-3.5 h-3.5" /> Profile
               </button>
-              <button onClick={() => setPrompt('Visualize the most interesting patterns')}
+              <button onClick={() => setPrompt('Suggest and build the best ML model for this data')}
                 className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-medium text-muted-foreground hover:text-foreground hover:bg-muted transition-colors">
-                <BarChart3 className="w-3.5 h-3.5" /> Chart
+                <Brain className="w-3.5 h-3.5" /> Model
               </button>
-              <button onClick={() => setPrompt('Find anomalies and outliers')}
+              <button onClick={() => setPrompt('Run a comprehensive statistical analysis on this dataset')}
                 className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-medium text-muted-foreground hover:text-foreground hover:bg-muted transition-colors">
-                <Search className="w-3.5 h-3.5" /> Anomalies
+                <BarChart3 className="w-3.5 h-3.5" /> Analyze
+              </button>
+              <button onClick={() => setPrompt('Design a data pipeline and feature engineering plan')}
+                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-medium text-muted-foreground hover:text-foreground hover:bg-muted transition-colors">
+                <Wrench className="w-3.5 h-3.5" /> Engineer
+              </button>
+              <button onClick={() => setPrompt('Create a deployment and monitoring plan for this data workflow')}
+                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-medium text-muted-foreground hover:text-foreground hover:bg-muted transition-colors">
+                <Settings className="w-3.5 h-3.5" /> MLOps
               </button>
             </>
           )}

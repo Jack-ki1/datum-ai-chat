@@ -20,6 +20,7 @@ const App = () => (
           <Route path="/chat" element={<Chat />} />
           <Route path="/chat/:sessionId" element={<Chat />} />
           <Route path="/data/:view" element={<DataViewer />} />
+          <Route path="/prompts" element={<SamplePrompts />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
