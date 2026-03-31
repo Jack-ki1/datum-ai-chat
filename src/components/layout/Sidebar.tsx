@@ -1,5 +1,6 @@
 import { useDatumStore } from '@/store/datum.store';
-import { MessageSquare, Database, Plus, Search, Hexagon } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { MessageSquare, Database, Plus, Search, Hexagon, BookOpen } from 'lucide-react';
 
 export function Sidebar() {
   const { sessions, activeSessionId, setActiveSession, newSession, fileName, isLoaded, dataset, profile, sidebarOpen } = useDatumStore();
