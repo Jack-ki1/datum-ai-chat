@@ -6,6 +6,7 @@ import Index from "./pages/Index";
 import Chat from "./pages/Chat";
 import DataViewer from "./pages/DataViewer";
 import NotFound from "./pages/NotFound";
+import SamplePrompts from "./pages/SamplePrompts";
 
 const queryClient = new QueryClient();
 
