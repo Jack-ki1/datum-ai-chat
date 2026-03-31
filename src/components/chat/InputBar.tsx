@@ -1,7 +1,7 @@
 import { useState, useRef, useCallback } from 'react';
 import { useDatumStore } from '@/store/datum.store';
 import { parseFile } from '@/lib/parsers';
-import { Send, Upload, X, BarChart3, Search, Sparkles, ArrowUp } from 'lucide-react';
+import { Upload, Sparkles, ArrowUp, Brain, BarChart3, Wrench, Settings } from 'lucide-react';
 
 export function InputBar({ onSend }: { onSend?: (text: string) => void }) {
   const { isAiLoading, isLoaded, fileName, ingest, sendMessage } = useDatumStore();
