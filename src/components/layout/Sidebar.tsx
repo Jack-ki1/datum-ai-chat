@@ -4,6 +4,7 @@ import { MessageSquare, Database, Plus, Search, Hexagon, BookOpen } from 'lucide
 
 export function Sidebar() {
   const { sessions, activeSessionId, setActiveSession, newSession, fileName, isLoaded, dataset, profile, sidebarOpen } = useDatumStore();
+  const navigate = useNavigate();
 
   if (!sidebarOpen) return null;
 
