@@ -89,6 +89,52 @@ export function healthScore(profile: ColumnProfile[]): number {
   return Math.round((1 - nullCells / totalCells) * 100);
 }
 
+export function entropy(data: Record<string, any>[], col: string): number {
+  const values = data.map(r => r[col]).filter(v => v !== null && v !== undefined && v !== '');
+  if (!values.length) return 0;
+  const counts: Record<string, number> = {};
+  values.forEach(v => { counts[String(v)] = (counts[String(v)] || 0) + 1; });
+  const n = values.length;
+  return -Object.values(counts).reduce((s, c) => {
+    const p = c / n;
+    return s + (p > 0 ? p * Math.log2(p) : 0);
+  }, 0);
+}
+
+export function classBalance(data: Record<string, any>[], col: string): { column: string; distribution: Record<string, number>; isImbalanced: boolean } {
+  const values = data.map(r => r[col]).filter(v => v !== null && v !== undefined && v !== '');
+  const counts: Record<string, number> = {};
+  values.forEach(v => { counts[String(v)] = (counts[String(v)] || 0) + 1; });
+  const n = values.length;
+  const distribution: Record<string, number> = {};
+  Object.entries(counts).forEach(([k, c]) => { distribution[k] = Math.round((c / n) * 100); });
+  const pcts = Object.values(distribution);
+  const maxPct = Math.max(...pcts);
+  const minPct = Math.min(...pcts);
+  return { column: col, distribution, isImbalanced: maxPct / Math.max(minPct, 1) > 3 };
+}
+
+export function temporalRange(data: Record<string, any>[], col: string): { min: string; max: string; granularity: string } {
+  const dates = data.map(r => new Date(r[col])).filter(d => !isNaN(d.getTime())).sort((a, b) => a.getTime() - b.getTime());
+  if (dates.length < 2) return { min: 'N/A', max: 'N/A', granularity: 'unknown' };
+  const min = dates[0].toISOString().split('T')[0];
+  const max = dates[dates.length - 1].toISOString().split('T')[0];
+  const diffs = [];
+  for (let i = 1; i < Math.min(dates.length, 20); i++) {
+    diffs.push(dates[i].getTime() - dates[i - 1].getTime());
+  }
+  const medianDiff = diffs.sort((a, b) => a - b)[Math.floor(diffs.length / 2)] / 1000;
+  let granularity = 'unknown';
+  if (medianDiff < 120) granularity = 'seconds';
+  else if (medianDiff < 7200) granularity = 'minutes';
+  else if (medianDiff < 172800) granularity = 'hourly';
+  else if (medianDiff < 864000) granularity = 'daily';
+  else if (medianDiff < 3456000) granularity = 'weekly';
+  else if (medianDiff < 35000000) granularity = 'monthly';
+  else granularity = 'yearly';
+  return { min, max, granularity };
+}
+
 export function pearsonCorr(data: Record<string, any>[], colA: string, colB: string): number {
   const pairs = data
     .map(r => [Number(r[colA]), Number(r[colB])])

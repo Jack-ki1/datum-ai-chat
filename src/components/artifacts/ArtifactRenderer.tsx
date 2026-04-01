@@ -18,6 +18,7 @@ import { DriftReportArtifact } from './DriftReportArtifact';
 import { CostAnalysisArtifact } from './CostAnalysisArtifact';
 import { SchemaExplorerArtifact } from './SchemaExplorerArtifact';
 import { LineageArtifact } from './LineageArtifact';
+import { SuggestionsArtifact } from './SuggestionsArtifact';
 import { Copy, Download, Maximize2 } from 'lucide-react';
 
 const typeLabels: Record<string, string> = {
