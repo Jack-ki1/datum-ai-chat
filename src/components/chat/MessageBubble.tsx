@@ -69,7 +69,7 @@ export function MessageBubble({ message }: { message: ChatMessage }) {
                 className="p-1 rounded-md hover:bg-muted text-muted-foreground/50 hover:text-muted-foreground transition-colors"
                 title="Copy response"
               >
-                {copied ? <Check className="w-3 h-3 text-green-500" /> : <Copy className="w-3 h-3" />}
+                {copied ? <Check className="w-3 h-3 text-primary" /> : <Copy className="w-3 h-3" />}
               </button>
               <button
                 onClick={() => !isAiLoading && regenerateLastMessage()}
