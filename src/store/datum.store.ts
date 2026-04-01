@@ -32,6 +32,7 @@ interface DatumStore {
   toggleChangelog: () => void;
   addChangelogEntry: (action: ChangelogEntry['action'], description: string) => void;
   removeChangelogEntry: (id: string) => void;
+  regenerateLastMessage: () => void;
 }
 
 function generateWelcome(data: Record<string, any>[], profile: ColumnProfile[], fileName: string): ChatMessage {
