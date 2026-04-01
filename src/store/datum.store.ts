@@ -222,5 +222,18 @@ export const useDatumStore = create<DatumStore>((set, get) => {
     removeChangelogEntry: (id) => set(s => ({
       changelog: s.changelog.filter(e => e.id !== id),
     })),
+    regenerateLastMessage: () => {
+      const { messages } = get();
+      // Find the last user message
+      const lastUserMsgIndex = [...messages].reverse().findIndex(m => m.role === 'user');
+      if (lastUserMsgIndex === -1) return;
+      const actualIndex = messages.length - 1 - lastUserMsgIndex;
+      const lastUserMsg = messages[actualIndex];
+      // Remove all messages after (and including) the last assistant response
+      const trimmed = messages.slice(0, actualIndex + 1);
+      set({ messages: trimmed });
+      // Re-send
+      get().sendMessage(lastUserMsg.content);
+    },
   };
 });
