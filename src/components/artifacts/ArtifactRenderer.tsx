@@ -28,7 +28,7 @@ const typeLabels: Record<string, string> = {
   feature_importance: 'FEATURES', confusion_matrix: 'CONFUSION MATRIX',
   experiment: 'EXPERIMENT', pipeline: 'PIPELINE', model_card: 'MODEL',
   drift_report: 'DRIFT', cost_analysis: 'COST', schema_explorer: 'SCHEMA',
-  lineage: 'LINEAGE',
+  lineage: 'LINEAGE', suggestions: 'SUGGESTIONS',
 };
 
 function ArtifactBody({ artifact }: { artifact: Artifact }) {
