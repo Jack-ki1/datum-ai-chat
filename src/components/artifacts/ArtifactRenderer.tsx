@@ -18,6 +18,7 @@ import { DriftReportArtifact } from './DriftReportArtifact';
 import { CostAnalysisArtifact } from './CostAnalysisArtifact';
 import { SchemaExplorerArtifact } from './SchemaExplorerArtifact';
 import { LineageArtifact } from './LineageArtifact';
+import { SuggestionsArtifact } from './SuggestionsArtifact';
 import { Copy, Download, Maximize2 } from 'lucide-react';
 
 const typeLabels: Record<string, string> = {
@@ -27,7 +28,7 @@ const typeLabels: Record<string, string> = {
   feature_importance: 'FEATURES', confusion_matrix: 'CONFUSION MATRIX',
   experiment: 'EXPERIMENT', pipeline: 'PIPELINE', model_card: 'MODEL',
   drift_report: 'DRIFT', cost_analysis: 'COST', schema_explorer: 'SCHEMA',
-  lineage: 'LINEAGE',
+  lineage: 'LINEAGE', suggestions: 'SUGGESTIONS',
 };
 
 function ArtifactBody({ artifact }: { artifact: Artifact }) {
@@ -51,6 +52,7 @@ function ArtifactBody({ artifact }: { artifact: Artifact }) {
     case 'cost_analysis': return <CostAnalysisArtifact artifact={artifact} />;
     case 'schema_explorer': return <SchemaExplorerArtifact artifact={artifact} />;
     case 'lineage': return <LineageArtifact artifact={artifact} />;
+    case 'suggestions': return <SuggestionsArtifact artifact={artifact} />;
     default: return <p className="text-xs text-muted-foreground p-3">Unknown artifact type: {artifact.type}</p>;
   }
 }
