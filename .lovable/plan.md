@@ -1,118 +1,102 @@
 
 
-# DATUM AI: Major Intelligence Upgrade
+# Advancing DATUM to Full-Stack AI Data Intelligence
 
-## Overview
-Three interconnected improvements: (1) dramatically better system prompts for richer AI output, (2) enhanced context pipeline for complex operations, (3) competitive feature additions inspired by Julius AI, ChatGPT Canvas, Hex, and others.
+## What This Achieves
+The user's 20 capabilities describe transforming DATUM from "a chat that profiles CSV files" into a comprehensive AI data intelligence platform — one that acts as a senior peer, debugging partner, research synthesizer, experiment designer, documentation generator, and cross-functional translator, all in one conversational interface.
+
+Most of these capabilities are unlocked through **system prompt engineering** and **UI affordances** — the AI model already has the knowledge; we need to instruct it correctly and surface the right interaction patterns.
 
 ---
 
-## 1. System Prompt Overhaul (Edge Function)
+## Changes
+
+### 1. Massive System Prompt Expansion (Edge Function)
 
 **File:** `supabase/functions/datum-chat/index.ts`
 
-### Current Problems
-- Prompt is decent but lacks structured reasoning instructions (chain-of-thought)
-- No output quality controls (confidence levels, assumption flagging)
-- Missing multi-step analysis patterns (the AI doesn't break complex requests into stages)
-- No data-aware formatting rules (e.g. "for small datasets use exact numbers, for large datasets use percentages")
+The current prompt covers data analysis and ML well, but lacks explicit instructions for ~12 of the 20 capabilities. Add new prompt sections:
 
-### Changes
-- **Add chain-of-thought reasoning block**: Instruct the AI to think step-by-step before answering complex questions — outline approach, check assumptions, then deliver results
-- **Add confidence/uncertainty signaling**: AI must flag when sample sizes are small, distributions are non-normal, or results may be unreliable
-- **Add multi-artifact orchestration rules**: For complex requests, produce a sequence of artifacts (e.g. "build a model" → stats panel + feature importance + model card + code + experiment tracker)
-- **Add smart follow-up generation**: AI generates 3 context-aware follow-up questions as clickable suggestions at the end of each response (rendered as a new `suggestions` artifact type)
-- **Add data-size-aware instructions**: Different behavior for <100 rows vs 1K+ vs 10K+ (exact values vs summaries vs sampling strategies)
-- **Add "show your work" mode**: For statistical tests, always show the test selection rationale, assumptions checked, and interpretation
-- **Improve artifact density rules**: "For analysis requests, ALWAYS include at least one visualization + one statistical summary + one code block"
-- **Add error recovery instructions**: When the user's request is ambiguous, generate the most likely interpretation AND suggest alternatives
-- **Enable reasoning mode**: Add `reasoning: { effort: "medium" }` to the API call for better complex analysis
+**New PERSONA expansion** — explicitly define all roles:
+- Senior data peer for brainstorming (#10, #13)
+- Debugging partner: accept error pastes, diagnose root cause, suggest fixes (#6)
+- Research synthesizer: summarize methods, compare approaches, extract implementation steps (#7)
+- Cross-functional translator: adapt output for analysts vs engineers vs executives (#4)
+- Experiment designer: A/B testing, power analysis, metric selection, statistical pitfalls (#8)
+- Data storytelling expert: executive summaries, dashboard narratives, stakeholder framing (#9)
+- Learning accelerator: adapt explanation depth to user level, provide intuition + examples (#11)
+- System design architect: pipelines, feature stores, deployment patterns, monitoring (#12)
+- Documentation generator: clean notebooks, write tech docs, standardize code comments (#14)
+- Second opinion provider: challenge assumptions, suggest alternatives, sanity-check approaches (#16)
+- Theory-to-practice bridge: explain papers then show implementation code (#17)
 
-### New Prompt Sections
-```
-RESPONSE QUALITY RULES:
-- For every statistical claim, cite the exact number and its context
-- Flag assumptions: "⚠️ Assuming normal distribution (Shapiro-Wilk p=0.34)"
-- For ML: always compare at least 2 approaches with trade-offs
-- End every response with a "💡 Suggested next steps" section with 3 specific actions
+**New prompt sections to add:**
 
-MULTI-STEP ANALYSIS PATTERN:
-When asked a complex question (model building, pipeline design, full analysis):
-1. State what you'll do (1-2 sentences)
-2. Check data readiness (missing values, types, distributions)  
-3. Execute the analysis with multiple artifacts
-4. Summarize findings with business impact
-5. Suggest follow-ups
+- `DEBUGGING_PARTNER` — When user pastes an error/traceback: (a) identify root cause, (b) explain why it happened, (c) provide fix with code artifact, (d) suggest preventive measures
+- `RESEARCH_SYNTHESIS` — When asked about methods/approaches: compare 3+ options in a table, cite trade-offs, give practical implementation steps as code
+- `EXPERIMENT_DESIGN` — A/B test setup, metric selection, power analysis formulas, common statistical pitfalls to avoid
+- `DATA_STORYTELLING` — Generate executive summaries, dashboard narratives, stakeholder-ready messaging. Use insights + stats artifacts formatted for non-technical audiences
+- `ADAPTIVE_DEPTH` — Detect user expertise from language. Juniors get more explanation; seniors get concise answers with code. Respond accordingly
+- `DOCUMENTATION_MODE` — When asked to document/clean: generate structured docstrings, README sections, code comments, data dictionaries
+- `AMBIGUITY_RESOLUTION` — When request is vague (e.g. "Why are users dropping?"): define metrics, suggest analyses, propose hypotheses, then execute the most likely one (#3)
+- `BLANK_PAGE_KILLER` — When user seems stuck or asks open-ended questions: provide a concrete starting point (first SQL draft, first model pipeline, first analysis outline) (#19)
+- `CROSS_STACK_CODE` — Expand code generation instructions: SQL (window functions, CTEs, optimization), Python (pandas, sklearn, PySpark, statsmodels), dbt models, Airflow DAGs, API scaffolding. Include code explanations + refactoring, not just generation (#5)
 
-SMART ARTIFACT COMBINATIONS:
-- "Analyze" → insights + stats + chart + code
-- "Build a model" → profile check + feature importance + model card + confusion matrix + experiment + code
-- "Design a pipeline" → schema explorer + pipeline + lineage + cost analysis + code
-- "Detect drift" → drift report + stats comparison + chart + anomaly report
-```
+**Update MULTI_STEP_PATTERNS** — Add new intent patterns:
+- `"Debug this" / error paste` → code (fix) + insights (root cause) + suggestions
+- `"Explain [concept]"` → insights (explanation) + code (example) + suggestions
+- `"Write documentation"` → code (documented version) + insights (structure) + suggestions  
+- `"Design experiment"` → hypothesis + stats (power analysis) + experiment + code + suggestions
+- `"Tell the story"` → insights (executive summary) + stats + chart + suggestions
+- `"Compare approaches"` → table (comparison) + insights (recommendation) + code (both implementations) + suggestions
+- `"I'm stuck"` → suggestions (5 concrete directions) + insights (framework for thinking)
 
----
+**Update RULES** — Add:
+- Rule 18: When user pastes an error, ALWAYS start with the root cause before suggesting fixes
+- Rule 19: Adapt explanation depth — if user uses technical terms, be concise; if they ask "what is", be thorough
+- Rule 20: For documentation requests, follow the codebase's existing style/conventions
+- Rule 21: When brainstorming, generate at least 5 ideas, ranked by feasibility and impact
+- Rule 22: For "why" questions about data patterns, provide both statistical and business explanations
 
-## 2. Enhanced Context Pipeline (Richer Data Sent to AI)
+### 2. Enhanced Welcome Screen & Quick Actions
 
-### `src/lib/context-builder.ts` — More Context
-- Add **data shape summary**: cardinality ratios, sparsity, class balance for potential target columns
-- Add **temporal detection**: identify date/time columns and note time range + granularity
-- Add **suggested target columns**: columns likely to be prediction targets (binary, low-cardinality categoricals at end of schema)
-- Send **distribution summaries** for numeric columns: skewness direction, modality hints
-- Increase sample data from 25 to 50 rows for better AI understanding
+**File:** `src/components/chat/WelcomeScreen.tsx`
 
-### `src/lib/stats.ts` — New Stat Functions
-- Add `skewness()` calculation for numeric columns (already partially there, formalize)
-- Add `entropy()` for categorical columns to measure information content
-- Add `classBalance()` to detect imbalanced classification scenarios
-- Add `temporalRange()` to detect date columns and extract min/max/granularity
+Update starter cards to reflect all 20 capabilities — replace current 6 with 8 that better represent the full platform:
 
----
+| Card | Prompt |
+|------|--------|
+| Analyze my data | Run comprehensive analysis |
+| Build a model | ML pipeline with evaluation |
+| Debug an error | Paste error for diagnosis |
+| Design experiment | A/B test / power analysis |
+| Explain a concept | Learn any data topic |
+| Generate documentation | Document code/data |
+| System design | Architecture planning |
+| Tell the data story | Executive summary |
 
-## 3. Competitive Feature Additions
+### 3. Expanded Quick Action Buttons
 
-### 3a. Smart Follow-Up Suggestions (Inspired by Julius AI)
-**New artifact type: `suggestions`**
+**File:** `src/components/chat/InputBar.tsx`
 
-After every AI response, the AI can emit a `suggestions` artifact containing 3 clickable follow-up prompts that are contextually relevant.
+Add 3 more quick action buttons (total 8, scrollable row):
+- **Debug** (Bug icon) → "I have an error to debug — paste your error message"
+- **Story** (BookOpen icon) → "Create an executive summary and data story for stakeholders"
+- **Docs** (FileText icon) → "Generate documentation for this dataset and analysis"
 
-- **New file:** `src/components/artifacts/SuggestionsArtifact.tsx` — renders 3 clickable cards below the response
-- **Modify:** `src/components/artifacts/ArtifactRenderer.tsx` — add `suggestions` case
-- **Modify:** `src/types/index.ts` — add `suggestions` to Artifact type docs
-- **Modify:** Edge function prompt — instruct AI to always end with `<artifact>{"type":"suggestions","items":[{"text":"...","prompt":"..."},...]}</artifact>`
-- When clicked, the suggestion auto-sends as a new message
+### 4. No-Dataset Mode Enhancement
 
-### 3b. Thinking/Reasoning Indicator (Inspired by ChatGPT/Claude)
-Show a "Thinking..." phase with reasoning steps before the final answer appears for complex queries.
+**File:** `supabase/functions/datum-chat/index.ts` — update `PROMPT_NO_DATASET`
 
-- **Modify:** `src/components/chat/MessageBubble.tsx` — detect reasoning tokens (if model returns them) and show a collapsible "Reasoning" section
-- **Modify:** `src/components/chat/TypingIndicator.tsx` — show "Analyzing your data..." instead of generic dots when dataset is loaded
-
-### 3c. Response Quality Enhancements
-- **Modify:** `src/components/chat/MessageBubble.tsx` — add a "Copy response" button and "Regenerate" button on assistant messages
-- **Modify:** `src/store/datum.store.ts` — add `regenerateLastMessage()` action that re-sends the last user message
-
-### 3d. Contextual Input Suggestions (Inspired by Hex/Julius)
-When the input bar is focused and empty, show 3-4 smart suggestions based on what the AI hasn't been asked yet about the current dataset.
-
-- **Modify:** `src/components/chat/InputBar.tsx` — add a floating suggestions panel above the input when focused + empty + dataset loaded
-- Suggestions derived from dataset profile (e.g. if there are date columns: "Show time series trends", if high-cardinality: "Segment by [top categorical column]")
+Currently the no-dataset prompt just lists capabilities. Enhance it to actually serve capabilities #6 (debugging), #7 (research), #11 (learning), #12 (system design), #13 (idea generation), #17 (theory↔practice) even without data loaded. The AI should be fully functional as a senior peer without requiring a file upload.
 
 ---
 
-## 4. Summary of File Changes
+## Summary of File Changes
 
 | Action | File | What |
 |--------|------|------|
-| Modify | `supabase/functions/datum-chat/index.ts` | Major prompt rewrite + reasoning mode |
-| Modify | `src/lib/context-builder.ts` | Richer dataset context (entropy, temporal, targets) |
-| Modify | `src/lib/stats.ts` | Add entropy, classBalance, temporalRange |
-| Create | `src/components/artifacts/SuggestionsArtifact.tsx` | Clickable follow-up suggestions |
-| Modify | `src/components/artifacts/ArtifactRenderer.tsx` | Add suggestions type |
-| Modify | `src/components/chat/MessageBubble.tsx` | Copy/Regenerate buttons, reasoning section |
-| Modify | `src/components/chat/TypingIndicator.tsx` | Contextual loading text |
-| Modify | `src/components/chat/InputBar.tsx` | Smart contextual suggestions when empty |
-| Modify | `src/store/datum.store.ts` | Add regenerateLastMessage action |
-| Modify | `src/types/index.ts` | Document suggestions artifact type |
+| Modify | `supabase/functions/datum-chat/index.ts` | Add 9 new prompt sections, expand PERSONA, update patterns + rules, enhance no-dataset mode |
+| Modify | `src/components/chat/WelcomeScreen.tsx` | 8 new capability-aligned starter cards |
+| Modify | `src/components/chat/InputBar.tsx` | Add Debug, Story, Docs quick actions |
 
