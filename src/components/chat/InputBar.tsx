@@ -1,7 +1,7 @@
 import { useState, useRef, useCallback, useMemo } from 'react';
 import { useDatumStore } from '@/store/datum.store';
 import { parseFile } from '@/lib/parsers';
-import { Upload, Sparkles, ArrowUp, Brain, BarChart3, Wrench, Settings, Lightbulb } from 'lucide-react';
+import { Upload, Sparkles, ArrowUp, Brain, BarChart3, Wrench, Settings, Lightbulb, Bug, BookOpen, FileText } from 'lucide-react';
 
 function getSmartSuggestions(profile: any[] | null): { text: string; prompt: string }[] {
   if (!profile) return [];
