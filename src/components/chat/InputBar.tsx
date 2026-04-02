@@ -1,7 +1,7 @@
 import { useState, useRef, useCallback, useMemo } from 'react';
 import { useDatumStore } from '@/store/datum.store';
 import { parseFile } from '@/lib/parsers';
-import { Upload, Sparkles, ArrowUp, Brain, BarChart3, Wrench, Settings, Lightbulb } from 'lucide-react';
+import { Upload, Sparkles, ArrowUp, Brain, BarChart3, Wrench, Settings, Lightbulb, Bug, BookOpen, FileText } from 'lucide-react';
 
 function getSmartSuggestions(profile: any[] | null): { text: string; prompt: string }[] {
   if (!profile) return [];
@@ -130,32 +130,44 @@ export function InputBar({ onSend }: { onSend?: (text: string) => void }) {
         </div>
 
         {/* Action buttons */}
-        <div className="flex items-center gap-1 px-3 pb-2.5">
+        <div className="flex items-center gap-1 px-3 pb-2.5 overflow-x-auto scrollbar-hide">
           <button onClick={() => fileRef.current?.click()}
-            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-medium text-muted-foreground hover:text-foreground hover:bg-muted transition-colors">
+            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-medium text-muted-foreground hover:text-foreground hover:bg-muted transition-colors shrink-0">
             <Upload className="w-3.5 h-3.5" /> Upload
           </button>
           {isLoaded && (
             <>
               <button onClick={() => setPrompt('Profile all columns in detail')}
-                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-medium text-muted-foreground hover:text-foreground hover:bg-muted transition-colors">
+                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-medium text-muted-foreground hover:text-foreground hover:bg-muted transition-colors shrink-0">
                 <Sparkles className="w-3.5 h-3.5" /> Profile
               </button>
               <button onClick={() => setPrompt('Suggest and build the best ML model for this data')}
-                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-medium text-muted-foreground hover:text-foreground hover:bg-muted transition-colors">
+                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-medium text-muted-foreground hover:text-foreground hover:bg-muted transition-colors shrink-0">
                 <Brain className="w-3.5 h-3.5" /> Model
               </button>
               <button onClick={() => setPrompt('Run a comprehensive statistical analysis on this dataset')}
-                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-medium text-muted-foreground hover:text-foreground hover:bg-muted transition-colors">
+                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-medium text-muted-foreground hover:text-foreground hover:bg-muted transition-colors shrink-0">
                 <BarChart3 className="w-3.5 h-3.5" /> Analyze
               </button>
               <button onClick={() => setPrompt('Design a data pipeline and feature engineering plan')}
-                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-medium text-muted-foreground hover:text-foreground hover:bg-muted transition-colors">
+                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-medium text-muted-foreground hover:text-foreground hover:bg-muted transition-colors shrink-0">
                 <Wrench className="w-3.5 h-3.5" /> Engineer
               </button>
               <button onClick={() => setPrompt('Create a deployment and monitoring plan for this data workflow')}
-                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-medium text-muted-foreground hover:text-foreground hover:bg-muted transition-colors">
+                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-medium text-muted-foreground hover:text-foreground hover:bg-muted transition-colors shrink-0">
                 <Settings className="w-3.5 h-3.5" /> MLOps
+              </button>
+              <button onClick={() => setPrompt('I have an error to debug — let me paste the traceback')}
+                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-medium text-muted-foreground hover:text-foreground hover:bg-muted transition-colors shrink-0">
+                <Bug className="w-3.5 h-3.5" /> Debug
+              </button>
+              <button onClick={() => setPrompt('Create an executive summary and data story for stakeholders')}
+                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-medium text-muted-foreground hover:text-foreground hover:bg-muted transition-colors shrink-0">
+                <BookOpen className="w-3.5 h-3.5" /> Story
+              </button>
+              <button onClick={() => setPrompt('Generate documentation for this dataset and analysis')}
+                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-medium text-muted-foreground hover:text-foreground hover:bg-muted transition-colors shrink-0">
+                <FileText className="w-3.5 h-3.5" /> Docs
               </button>
             </>
           )}
