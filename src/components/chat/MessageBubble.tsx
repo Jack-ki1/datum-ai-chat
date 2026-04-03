@@ -1,11 +1,15 @@
 import type { ChatMessage } from '@/types';
 import ReactMarkdown from 'react-markdown';
 import { ArtifactRenderer } from '@/components/artifacts/ArtifactRenderer';
-import { User, Hexagon, Copy, Check, RefreshCw } from 'lucide-react';
+import { User, Hexagon, Copy, Check, RefreshCw, Pin, PinOff } from 'lucide-react';
 import { useState } from 'react';
 import { useDatumStore } from '@/store/datum.store';
 
-export function MessageBubble({ message }: { message: ChatMessage }) {
+export function MessageBubble({ message, isPinned, onTogglePin }: {
+  message: ChatMessage;
+  isPinned?: boolean;
+  onTogglePin?: () => void;
+}) {
   const isUser = message.role === 'user';
   const time = new Date(message.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   const [copied, setCopied] = useState(false);
@@ -18,7 +22,7 @@ export function MessageBubble({ message }: { message: ChatMessage }) {
   };
 
   return (
-    <div className={`flex gap-3.5 px-6 py-4 animate-fade-slide ${isUser ? 'flex-row-reverse' : ''}`}>
+    <div className={`group flex gap-3.5 px-6 py-4 animate-fade-slide ${isUser ? 'flex-row-reverse' : ''} ${isPinned ? 'bg-primary/3 border-l-2 border-primary/20' : ''}`}>
       {/* Avatar */}
       <div className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 shadow-sm ${
         isUser
@@ -63,7 +67,7 @@ export function MessageBubble({ message }: { message: ChatMessage }) {
         <div className="flex items-center gap-2">
           <span className="text-[10px] text-muted-foreground/50">{time}</span>
           {!isUser && message.content && (
-            <div className="flex items-center gap-0.5">
+            <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
               <button
                 onClick={handleCopy}
                 className="p-1 rounded-md hover:bg-muted text-muted-foreground/50 hover:text-muted-foreground transition-colors"
@@ -79,6 +83,15 @@ export function MessageBubble({ message }: { message: ChatMessage }) {
               >
                 <RefreshCw className="w-3 h-3" />
               </button>
+              {onTogglePin && (
+                <button
+                  onClick={onTogglePin}
+                  className={`p-1 rounded-md hover:bg-muted transition-colors ${isPinned ? 'text-primary' : 'text-muted-foreground/50 hover:text-muted-foreground'}`}
+                  title={isPinned ? 'Unpin message' : 'Pin message'}
+                >
+                  {isPinned ? <PinOff className="w-3 h-3" /> : <Pin className="w-3 h-3" />}
+                </button>
+              )}
             </div>
           )}
         </div>
