@@ -3,6 +3,9 @@ import { PanelLeftClose, PanelLeft, Clock, Database, Layers } from 'lucide-react
 import { formatNumber, healthScore } from '@/lib/stats';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
+import { ExportButton } from '@/components/chat/ExportButton';
+import { ChatSearch } from '@/components/chat/ChatSearch';
+import { ThemeToggle } from '@/components/ThemeToggle';
 
 export function Topbar() {
   const { fileName, isLoaded, dataset, profile, sidebarOpen, toggleSidebar, sessions, activeSessionId, changelogOpen, toggleChangelog } = useDatumStore();
@@ -21,6 +24,12 @@ export function Topbar() {
       <span className="text-sm font-semibold text-foreground truncate">
         {session?.title || 'New Session'}
       </span>
+
+      {/* Keyboard shortcut hint */}
+      <kbd className="hidden md:inline-flex items-center gap-1 text-[10px] font-mono text-muted-foreground bg-muted px-2 py-0.5 rounded-md border border-border cursor-pointer hover:bg-accent transition-colors"
+        onClick={() => window.dispatchEvent(new KeyboardEvent('keydown', { key: 'k', metaKey: true }))}>
+        ⌘K
+      </kbd>
 
       {isLoaded && (
         <div className="flex items-center gap-2 ml-auto">
@@ -46,9 +55,15 @@ export function Topbar() {
 
       {!isLoaded && <div className="ml-auto" />}
 
-      <button onClick={toggleChangelog} className={`p-1.5 rounded-lg transition-colors ${changelogOpen ? 'text-primary bg-primary/10' : 'text-muted-foreground hover:text-foreground hover:bg-muted'}`}>
-        <Clock className="w-[18px] h-[18px]" />
-      </button>
+      {/* Right-side actions */}
+      <div className="flex items-center gap-0.5">
+        <ChatSearch />
+        <ExportButton />
+        <ThemeToggle />
+        <button onClick={toggleChangelog} className={`p-1.5 rounded-lg transition-colors ${changelogOpen ? 'text-primary bg-primary/10' : 'text-muted-foreground hover:text-foreground hover:bg-muted'}`}>
+          <Clock className="w-[18px] h-[18px]" />
+        </button>
+      </div>
     </header>
   );
 }
