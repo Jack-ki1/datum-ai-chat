@@ -178,8 +178,8 @@ export function InputBar({ onSend }: { onSend?: (text: string) => void }) {
         Enter to send · Shift+Enter for new line · Drag & drop files
       </p>
 
-      <input ref={fileRef} type="file" accept=".csv,.json,.xlsx,.xls,.tsv" className="hidden"
-        onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFile(f); e.target.value = ''; }} />
+      <input ref={fileRef} type="file" accept=".csv,.json,.xlsx,.xls,.tsv" multiple className="hidden"
+        onChange={(e) => { const files = e.target.files; if (files) Array.from(files).forEach(f => handleFile(f)); e.target.value = ''; }} />
     </div>
   );
 }
