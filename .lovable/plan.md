@@ -1,102 +1,114 @@
 
 
-# Advancing DATUM to Full-Stack AI Data Intelligence
+# FINESE AI: Rebrand + Downloads + New Features + AI Improvements
 
-## What This Achieves
-The user's 20 capabilities describe transforming DATUM from "a chat that profiles CSV files" into a comprehensive AI data intelligence platform — one that acts as a senior peer, debugging partner, research synthesizer, experiment designer, documentation generator, and cross-functional translator, all in one conversational interface.
+## 1. Rebrand: DATUM → FINESE AI
 
-Most of these capabilities are unlocked through **system prompt engineering** and **UI affordances** — the AI model already has the knowledge; we need to instruct it correctly and surface the right interaction patterns.
+Replace all user-facing references to "DATUM" with "FINESE AI" across the entire app.
+
+**Files to modify:**
+- `index.html` — title, meta tags, og:title
+- `src/components/layout/Sidebar.tsx` — brand name + swap Hexagon icon for the uploaded logo image
+- `src/components/chat/WelcomeScreen.tsx` — heading text
+- `src/components/chat/ExportButton.tsx` — export header text
+- `src/components/chat/MessageBubble.tsx` — assistant avatar (use logo instead of Hexagon)
+- `src/components/chat/CommandPalette.tsx` — any DATUM references
+- `supabase/functions/datum-chat/index.ts` — PERSONA text: "DATUM AI" → "FINESE AI"
+- `src/components/layout/Topbar.tsx` — any DATUM text references
+
+**Logo:** Copy `user-uploads://FINESE_LOGO.jpg` to `src/assets/finese-logo.jpg` and import it where the Hexagon icon currently appears (Sidebar brand, MessageBubble assistant avatar, WelcomeScreen hero).
+
+Note: CSS variable names like `--datum-surf` and tailwind class names like `datum-cyan` are internal and will NOT be renamed (they don't appear to users).
 
 ---
 
-## Changes
+## 2. Fully Functional Download Buttons on Artifacts
 
-### 1. Massive System Prompt Expansion (Edge Function)
+Currently the Download button in `ArtifactRenderer.tsx` is non-functional (no onClick handler). Implement real download logic that generates the appropriate file type based on the artifact.
+
+**File:** `src/components/artifacts/ArtifactRenderer.tsx`
+
+Add a `downloadArtifact(artifact)` function that handles:
+
+| Artifact Type | Download Format |
+|---|---|
+| `code` | `.py`, `.sql`, `.r` based on `artifact.lang` |
+| `table`, `pivot` | `.csv` (convert data array to CSV) |
+| `chart` | `.png` (use canvas export from recharts container) |
+| `insights`, `hypothesis`, `model_card`, `experiment` | `.md` (Markdown) |
+| `stats`, `feature_importance`, `confusion_matrix` | `.csv` |
+| `pipeline`, `lineage`, `schema_explorer` | `.json` |
+| `corr_matrix` | `.csv` |
+| `anomaly_report`, `drift_report` | `.json` |
+| `cost_analysis` | `.xlsx` (using xlsx library already installed) |
+| `profile` | `.json` |
+
+Also make the Copy button functional — copies artifact content as text/JSON to clipboard.
+
+Also make the Expand/Maximize button functional — opens artifact in a full-screen dialog overlay.
+
+---
+
+## 3. New Features & Capabilities
+
+### 3a. Keyboard Shortcuts Panel
+Add a `?` keyboard shortcut that shows a help overlay listing all shortcuts (Cmd+K, Cmd+N for new chat, Cmd+/ for focus input, etc.)
+
+**New file:** `src/components/chat/KeyboardShortcuts.tsx`
+**Modify:** `src/App.tsx` — register shortcuts
+
+### 3b. Message Reactions / Feedback
+Add thumbs-up/thumbs-down on AI messages for response quality feedback (stored in local state for now).
+
+**Modify:** `src/components/chat/MessageBubble.tsx` — add ThumbsUp/ThumbsDown buttons
+
+### 3c. Multi-File Upload
+Currently only single file upload. Allow multiple files to be uploaded and merged/compared.
+
+**Modify:** `src/components/chat/InputBar.tsx` — change `<input>` to accept `multiple`, show file list
+
+### 3d. Auto-Save Sessions to LocalStorage
+Sessions currently reset on refresh. Persist sessions to localStorage.
+
+**Modify:** `src/store/datum.store.ts` — add zustand `persist` middleware
+
+### 3e. Fullscreen Artifact Viewer
+When clicking the Maximize button on an artifact, open it in a fullscreen dialog.
+
+**New file:** `src/components/artifacts/ArtifactFullscreen.tsx`
+**Modify:** `src/components/artifacts/ArtifactRenderer.tsx` — wire Maximize button
+
+---
+
+## 4. AI Improvements
 
 **File:** `supabase/functions/datum-chat/index.ts`
 
-The current prompt covers data analysis and ML well, but lacks explicit instructions for ~12 of the 20 capabilities. Add new prompt sections:
-
-**New PERSONA expansion** — explicitly define all roles:
-- Senior data peer for brainstorming (#10, #13)
-- Debugging partner: accept error pastes, diagnose root cause, suggest fixes (#6)
-- Research synthesizer: summarize methods, compare approaches, extract implementation steps (#7)
-- Cross-functional translator: adapt output for analysts vs engineers vs executives (#4)
-- Experiment designer: A/B testing, power analysis, metric selection, statistical pitfalls (#8)
-- Data storytelling expert: executive summaries, dashboard narratives, stakeholder framing (#9)
-- Learning accelerator: adapt explanation depth to user level, provide intuition + examples (#11)
-- System design architect: pipelines, feature stores, deployment patterns, monitoring (#12)
-- Documentation generator: clean notebooks, write tech docs, standardize code comments (#14)
-- Second opinion provider: challenge assumptions, suggest alternatives, sanity-check approaches (#16)
-- Theory-to-practice bridge: explain papers then show implementation code (#17)
-
-**New prompt sections to add:**
-
-- `DEBUGGING_PARTNER` — When user pastes an error/traceback: (a) identify root cause, (b) explain why it happened, (c) provide fix with code artifact, (d) suggest preventive measures
-- `RESEARCH_SYNTHESIS` — When asked about methods/approaches: compare 3+ options in a table, cite trade-offs, give practical implementation steps as code
-- `EXPERIMENT_DESIGN` — A/B test setup, metric selection, power analysis formulas, common statistical pitfalls to avoid
-- `DATA_STORYTELLING` — Generate executive summaries, dashboard narratives, stakeholder-ready messaging. Use insights + stats artifacts formatted for non-technical audiences
-- `ADAPTIVE_DEPTH` — Detect user expertise from language. Juniors get more explanation; seniors get concise answers with code. Respond accordingly
-- `DOCUMENTATION_MODE` — When asked to document/clean: generate structured docstrings, README sections, code comments, data dictionaries
-- `AMBIGUITY_RESOLUTION` — When request is vague (e.g. "Why are users dropping?"): define metrics, suggest analyses, propose hypotheses, then execute the most likely one (#3)
-- `BLANK_PAGE_KILLER` — When user seems stuck or asks open-ended questions: provide a concrete starting point (first SQL draft, first model pipeline, first analysis outline) (#19)
-- `CROSS_STACK_CODE` — Expand code generation instructions: SQL (window functions, CTEs, optimization), Python (pandas, sklearn, PySpark, statsmodels), dbt models, Airflow DAGs, API scaffolding. Include code explanations + refactoring, not just generation (#5)
-
-**Update MULTI_STEP_PATTERNS** — Add new intent patterns:
-- `"Debug this" / error paste` → code (fix) + insights (root cause) + suggestions
-- `"Explain [concept]"` → insights (explanation) + code (example) + suggestions
-- `"Write documentation"` → code (documented version) + insights (structure) + suggestions  
-- `"Design experiment"` → hypothesis + stats (power analysis) + experiment + code + suggestions
-- `"Tell the story"` → insights (executive summary) + stats + chart + suggestions
-- `"Compare approaches"` → table (comparison) + insights (recommendation) + code (both implementations) + suggestions
-- `"I'm stuck"` → suggestions (5 concrete directions) + insights (framework for thinking)
-
-**Update RULES** — Add:
-- Rule 18: When user pastes an error, ALWAYS start with the root cause before suggesting fixes
-- Rule 19: Adapt explanation depth — if user uses technical terms, be concise; if they ask "what is", be thorough
-- Rule 20: For documentation requests, follow the codebase's existing style/conventions
-- Rule 21: When brainstorming, generate at least 5 ideas, ranked by feasibility and impact
-- Rule 22: For "why" questions about data patterns, provide both statistical and business explanations
-
-### 2. Enhanced Welcome Screen & Quick Actions
-
-**File:** `src/components/chat/WelcomeScreen.tsx`
-
-Update starter cards to reflect all 20 capabilities — replace current 6 with 8 that better represent the full platform:
-
-| Card | Prompt |
-|------|--------|
-| Analyze my data | Run comprehensive analysis |
-| Build a model | ML pipeline with evaluation |
-| Debug an error | Paste error for diagnosis |
-| Design experiment | A/B test / power analysis |
-| Explain a concept | Learn any data topic |
-| Generate documentation | Document code/data |
-| System design | Architecture planning |
-| Tell the data story | Executive summary |
-
-### 3. Expanded Quick Action Buttons
-
-**File:** `src/components/chat/InputBar.tsx`
-
-Add 3 more quick action buttons (total 8, scrollable row):
-- **Debug** (Bug icon) → "I have an error to debug — paste your error message"
-- **Story** (BookOpen icon) → "Create an executive summary and data story for stakeholders"
-- **Docs** (FileText icon) → "Generate documentation for this dataset and analysis"
-
-### 4. No-Dataset Mode Enhancement
-
-**File:** `supabase/functions/datum-chat/index.ts` — update `PROMPT_NO_DATASET`
-
-Currently the no-dataset prompt just lists capabilities. Enhance it to actually serve capabilities #6 (debugging), #7 (research), #11 (learning), #12 (system design), #13 (idea generation), #17 (theory↔practice) even without data loaded. The AI should be fully functional as a senior peer without requiring a file upload.
+- Upgrade model from `google/gemini-2.5-pro` to `google/gemini-3.1-pro-preview` for stronger reasoning
+- Increase reasoning effort from `medium` to `high`
+- Add explicit instructions for file-downloadable outputs: when user asks to "generate a Python script" or "create SQL", produce a `code` artifact with proper `lang` field so the download button works
+- Add instructions to always produce well-structured, self-contained code artifacts (not inline code snippets)
+- Add PPTX/Document generation instructions: when user asks for "presentation" or "report", generate structured markdown artifacts with clear sections
 
 ---
 
 ## Summary of File Changes
 
-| Action | File | What |
-|--------|------|------|
-| Modify | `supabase/functions/datum-chat/index.ts` | Add 9 new prompt sections, expand PERSONA, update patterns + rules, enhance no-dataset mode |
-| Modify | `src/components/chat/WelcomeScreen.tsx` | 8 new capability-aligned starter cards |
-| Modify | `src/components/chat/InputBar.tsx` | Add Debug, Story, Docs quick actions |
+| Action | File |
+|--------|------|
+| Copy | `user-uploads://FINESE_LOGO.jpg` → `src/assets/finese-logo.jpg` |
+| Modify | `index.html` |
+| Modify | `src/components/layout/Sidebar.tsx` |
+| Modify | `src/components/chat/WelcomeScreen.tsx` |
+| Modify | `src/components/chat/MessageBubble.tsx` |
+| Modify | `src/components/chat/ExportButton.tsx` |
+| Modify | `src/components/chat/CommandPalette.tsx` |
+| Modify | `src/components/chat/InputBar.tsx` |
+| Modify | `src/components/layout/Topbar.tsx` |
+| Modify | `src/components/artifacts/ArtifactRenderer.tsx` |
+| Create | `src/components/artifacts/ArtifactFullscreen.tsx` |
+| Create | `src/components/chat/KeyboardShortcuts.tsx` |
+| Modify | `src/store/datum.store.ts` |
+| Modify | `src/App.tsx` |
+| Modify | `supabase/functions/datum-chat/index.ts` |
 
