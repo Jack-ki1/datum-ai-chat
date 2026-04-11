@@ -62,7 +62,7 @@ function dataToCsv(data: Record<string, any>[]): string {
 }
 
 function downloadBlob(content: string | Uint8Array, name: string, type: string) {
-  const blob = new Blob([content], { type });
+  const blob = new Blob([content instanceof Uint8Array ? content.buffer as ArrayBuffer : content], { type });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url; a.download = name; a.click();
