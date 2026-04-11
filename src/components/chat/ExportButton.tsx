@@ -10,7 +10,7 @@ export function ExportButton() {
 
   const exportMarkdown = () => {
     const lines = messages.map(m => {
-      const role = m.role === 'user' ? '**You**' : '**DATUM AI**';
+      const role = m.role === 'user' ? '**You**' : '**FINESE AI**';
       const time = new Date(m.timestamp).toLocaleString();
       let text = `### ${role} — ${time}\n\n${m.content}`;
       if (m.artifacts?.length) {
@@ -18,7 +18,7 @@ export function ExportButton() {
       }
       return text;
     });
-    const md = `# DATUM Chat Export\n**Dataset:** ${fileName || 'None'}\n**Exported:** ${new Date().toLocaleString()}\n\n---\n\n${lines.join('\n\n---\n\n')}`;
+    const md = `# FINESE AI Chat Export\n**Dataset:** ${fileName || 'None'}\n**Exported:** ${new Date().toLocaleString()}\n\n---\n\n${lines.join('\n\n---\n\n')}`;
     download(md, `datum-export-${Date.now()}.md`, 'text/markdown');
     setOpen(false);
   };

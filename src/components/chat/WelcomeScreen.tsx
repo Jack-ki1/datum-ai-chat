@@ -1,6 +1,7 @@
 import { useDatumStore } from '@/store/datum.store';
 import { salesData, hrData, stockData } from '@/lib/sample-datasets';
 import { BarChart3, Search, Sparkles, Brain, Bug, FlaskConical, GraduationCap, FileText, Blocks, BookOpen } from 'lucide-react';
+import fineseLogo from '@/assets/finese-logo.jpg';
 
 const starters = [
   { icon: Sparkles, title: 'Analyze my data', desc: 'Comprehensive analysis with charts & stats', prompt: 'Run a comprehensive analysis on this data — key findings, distributions, and visualizations', color: 'text-primary' },
@@ -25,9 +26,7 @@ export function WelcomeScreen({ onPrompt }: { onPrompt: (text: string) => void }
   return (
     <div className="flex flex-col items-center justify-center h-full px-6 py-12">
       {/* Hero */}
-      <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center mb-5">
-        <Sparkles className="w-7 h-7 text-primary" />
-      </div>
+      <img src={fineseLogo} alt="FINESE AI" className="w-14 h-14 rounded-2xl object-cover shadow-md mb-5" />
       <h1 className="font-display font-extrabold text-4xl text-foreground mb-2 tracking-tight">
         What can I help with?
       </h1>

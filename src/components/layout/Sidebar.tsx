@@ -1,6 +1,7 @@
 import { useDatumStore } from '@/store/datum.store';
 import { useNavigate } from 'react-router-dom';
-import { MessageSquare, Database, Plus, Search, Hexagon, BookOpen } from 'lucide-react';
+import { MessageSquare, Database, Plus, Search, BookOpen } from 'lucide-react';
+import fineseLogo from '@/assets/finese-logo.jpg';
 
 export function Sidebar() {
   const { sessions, activeSessionId, setActiveSession, newSession, fileName, isLoaded, dataset, profile, sidebarOpen } = useDatumStore();
@@ -13,12 +14,10 @@ export function Sidebar() {
       {/* Brand */}
       <div className="px-5 pt-6 pb-5">
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-xl bg-primary flex items-center justify-center shadow-sm">
-            <Hexagon className="w-4 h-4 text-primary-foreground" strokeWidth={2.5} />
-          </div>
+          <img src={fineseLogo} alt="FINESE AI" className="w-8 h-8 rounded-xl object-cover shadow-sm" />
           <div>
-            <span className="font-display font-extrabold text-foreground text-[17px] tracking-tight">DATUM</span>
-            <p className="text-[10px] font-medium text-muted-foreground tracking-wide">AI Data Intelligence</p>
+            <span className="font-display font-extrabold text-foreground text-[17px] tracking-tight">FINESE AI</span>
+            <p className="text-[10px] font-medium text-muted-foreground tracking-wide">Intelligent Analytics</p>
           </div>
         </div>
       </div>

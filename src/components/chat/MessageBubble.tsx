@@ -1,9 +1,10 @@
 import type { ChatMessage } from '@/types';
 import ReactMarkdown from 'react-markdown';
 import { ArtifactRenderer } from '@/components/artifacts/ArtifactRenderer';
-import { User, Hexagon, Copy, Check, RefreshCw, Pin, PinOff } from 'lucide-react';
+import { User, Copy, Check, RefreshCw, Pin, PinOff, ThumbsUp, ThumbsDown } from 'lucide-react';
 import { useState } from 'react';
 import { useDatumStore } from '@/store/datum.store';
+import fineseLogo from '@/assets/finese-logo.jpg';
 
 export function MessageBubble({ message, isPinned, onTogglePin }: {
   message: ChatMessage;
@@ -13,6 +14,7 @@ export function MessageBubble({ message, isPinned, onTogglePin }: {
   const isUser = message.role === 'user';
   const time = new Date(message.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   const [copied, setCopied] = useState(false);
+  const [feedback, setFeedback] = useState<'up' | 'down' | null>(null);
   const { regenerateLastMessage, isAiLoading } = useDatumStore();
 
   const handleCopy = () => {
@@ -24,12 +26,10 @@ export function MessageBubble({ message, isPinned, onTogglePin }: {
   return (
     <div className={`group flex gap-3.5 px-6 py-4 animate-fade-slide ${isUser ? 'flex-row-reverse' : ''} ${isPinned ? 'bg-primary/3 border-l-2 border-primary/20' : ''}`}>
       {/* Avatar */}
-      <div className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 shadow-sm ${
-        isUser
-          ? 'bg-muted text-muted-foreground'
-          : 'bg-primary text-primary-foreground'
+      <div className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 shadow-sm overflow-hidden ${
+        isUser ? 'bg-muted text-muted-foreground' : ''
       }`}>
-        {isUser ? <User className="w-4 h-4" /> : <Hexagon className="w-4 h-4" strokeWidth={2.5} />}
+        {isUser ? <User className="w-4 h-4" /> : <img src={fineseLogo} alt="FINESE AI" className="w-8 h-8 object-cover" />}
       </div>
 
       {/* Content */}
@@ -68,27 +68,20 @@ export function MessageBubble({ message, isPinned, onTogglePin }: {
           <span className="text-[10px] text-muted-foreground/50">{time}</span>
           {!isUser && message.content && (
             <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
-              <button
-                onClick={handleCopy}
-                className="p-1 rounded-md hover:bg-muted text-muted-foreground/50 hover:text-muted-foreground transition-colors"
-                title="Copy response"
-              >
+              <button onClick={handleCopy} className="p-1 rounded-md hover:bg-muted text-muted-foreground/50 hover:text-muted-foreground transition-colors" title="Copy response">
                 {copied ? <Check className="w-3 h-3 text-primary" /> : <Copy className="w-3 h-3" />}
               </button>
-              <button
-                onClick={() => !isAiLoading && regenerateLastMessage()}
-                disabled={isAiLoading}
-                className="p-1 rounded-md hover:bg-muted text-muted-foreground/50 hover:text-muted-foreground transition-colors disabled:opacity-30"
-                title="Regenerate response"
-              >
+              <button onClick={() => !isAiLoading && regenerateLastMessage()} disabled={isAiLoading} className="p-1 rounded-md hover:bg-muted text-muted-foreground/50 hover:text-muted-foreground transition-colors disabled:opacity-30" title="Regenerate">
                 <RefreshCw className="w-3 h-3" />
               </button>
+              <button onClick={() => setFeedback(f => f === 'up' ? null : 'up')} className={`p-1 rounded-md hover:bg-muted transition-colors ${feedback === 'up' ? 'text-primary' : 'text-muted-foreground/50 hover:text-muted-foreground'}`} title="Good response">
+                <ThumbsUp className="w-3 h-3" />
+              </button>
+              <button onClick={() => setFeedback(f => f === 'down' ? null : 'down')} className={`p-1 rounded-md hover:bg-muted transition-colors ${feedback === 'down' ? 'text-destructive' : 'text-muted-foreground/50 hover:text-muted-foreground'}`} title="Poor response">
+                <ThumbsDown className="w-3 h-3" />
+              </button>
               {onTogglePin && (
-                <button
-                  onClick={onTogglePin}
-                  className={`p-1 rounded-md hover:bg-muted transition-colors ${isPinned ? 'text-primary' : 'text-muted-foreground/50 hover:text-muted-foreground'}`}
-                  title={isPinned ? 'Unpin message' : 'Pin message'}
-                >
+                <button onClick={onTogglePin} className={`p-1 rounded-md hover:bg-muted transition-colors ${isPinned ? 'text-primary' : 'text-muted-foreground/50 hover:text-muted-foreground'}`} title={isPinned ? 'Unpin' : 'Pin'}>
                   {isPinned ? <PinOff className="w-3 h-3" /> : <Pin className="w-3 h-3" />}
                 </button>
               )}
