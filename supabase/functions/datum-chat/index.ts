@@ -247,6 +247,7 @@ function buildSystemPrompt(ctx: any): string {
   }
 
   const { fileName, rowCount, colCount, healthScore, profile, correlations, sampleData, advancedContext } = ctx;
+  // sampleData is now optional; tool-calling provides real numbers on demand.
 
   const sizeCategory = rowCount < 100 ? 'small' : rowCount < 1000 ? 'medium' : rowCount < 10000 ? 'large' : 'very_large';
 
@@ -322,8 +323,27 @@ ${sizeInstructions}
 
 ${CAPABILITIES}
 
-${RULES}`;
+${RULES}
+
+${TOOL_USAGE_PROMPT}`;
 }
+
+const TOOL_USAGE_PROMPT = `## REAL COMPUTATION TOOLS (USE THEM!)
+You have access to function tools that execute on the actual dataset, not the sample.
+**NEVER fabricate numbers** — if you need an exact mean, group total, correlation, t-test, outlier count,
+or histogram, CALL THE TOOL and use the result.
+
+Available tools:
+- describe_column(column) — exact mean/std/quartiles or top categories
+- group_by_aggregate(group_col, value_col, agg) — sum/mean/median/min/max/count by group
+- correlation(col_a, col_b) — Pearson r on real data
+- ttest(value_col, group_col, group_a, group_b) — Welch's two-sample t-test
+- outliers(column, method) — IQR or z-score outlier detection
+- filter_count(column, op, value) — count + sample of rows matching a filter
+- histogram(column, bins) — bin counts for distributions
+
+After calling tools, weave their actual results into your narrative and artifacts.
+If a number came from a tool, that number is real and trustworthy.`;
 
 // ─── Prompt fragments ────────────────────────────────────────────
 
