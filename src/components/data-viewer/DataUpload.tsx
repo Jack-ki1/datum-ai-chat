@@ -14,7 +14,7 @@ export function DataUpload() {
     setLoading(true);
     try {
       const data = await parseFile(file);
-      ingest(data, file.name);
+      await ingest(data, file.name);
     } catch (e) {
       alert('Failed to parse file: ' + (e as Error).message);
     } finally {
