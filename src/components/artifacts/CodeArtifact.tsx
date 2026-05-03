@@ -1,10 +1,12 @@
 import { useState } from 'react';
 import type { Artifact } from '@/types';
 import { Check, Copy } from 'lucide-react';
+import { PythonRunner } from '@/components/python/PythonRunner';
 
 export function CodeArtifact({ artifact }: { artifact: Artifact }) {
   const [copied, setCopied] = useState(false);
   const code = artifact.code || '';
+  const isPython = (artifact.lang || '').toLowerCase() === 'python';
 
   const handleCopy = () => {
     navigator.clipboard.writeText(code);
@@ -21,6 +23,7 @@ export function CodeArtifact({ artifact }: { artifact: Artifact }) {
       <pre className="p-4 overflow-x-auto text-datum-cyan font-mono text-[11px] leading-relaxed bg-background/50">
         <code>{code}</code>
       </pre>
+      {isPython && code && <PythonRunner initialCode={code} />}
     </div>
   );
 }
