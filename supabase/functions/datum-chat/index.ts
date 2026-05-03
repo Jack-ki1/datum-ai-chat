@@ -6,17 +6,190 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
+const FUNCTIONS_BASE = `${Deno.env.get("SUPABASE_URL")}/functions/v1`;
+
+// Tools the LLM can call. Each is executed by the compute-tools edge function
+// against the real dataset stored in Supabase Storage.
+const TOOL_DEFS = [
+  {
+    type: "function",
+    function: {
+      name: "describe_column",
+      description: "Compute exact descriptive stats for one column (mean, std, quartiles, or top categories).",
+      parameters: { type: "object", properties: { column: { type: "string" } }, required: ["column"] },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "group_by_aggregate",
+      description: "Group rows by group_col and aggregate value_col with sum/mean/median/min/max/count.",
+      parameters: {
+        type: "object",
+        properties: {
+          group_col: { type: "string" },
+          value_col: { type: "string" },
+          agg: { type: "string", enum: ["sum", "mean", "median", "min", "max", "count"] },
+        },
+        required: ["group_col", "value_col", "agg"],
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "correlation",
+      description: "Compute Pearson correlation between two numeric columns on the real data.",
+      parameters: {
+        type: "object",
+        properties: { col_a: { type: "string" }, col_b: { type: "string" } },
+        required: ["col_a", "col_b"],
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "ttest",
+      description: "Welch's two-sample t-test on value_col between two groups in group_col.",
+      parameters: {
+        type: "object",
+        properties: {
+          value_col: { type: "string" },
+          group_col: { type: "string" },
+          group_a: { type: "string" },
+          group_b: { type: "string" },
+        },
+        required: ["value_col", "group_col", "group_a", "group_b"],
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "outliers",
+      description: "Detect outliers in a numeric column via IQR or z-score method.",
+      parameters: {
+        type: "object",
+        properties: {
+          column: { type: "string" },
+          method: { type: "string", enum: ["iqr", "zscore"] },
+        },
+        required: ["column"],
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "filter_count",
+      description: "Count rows matching a filter and return a sample.",
+      parameters: {
+        type: "object",
+        properties: {
+          column: { type: "string" },
+          op: { type: "string", enum: ["eq", "neq", "gt", "gte", "lt", "lte", "contains"] },
+          value: {},
+        },
+        required: ["column", "op", "value"],
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "histogram",
+      description: "Compute histogram bins for a numeric column.",
+      parameters: {
+        type: "object",
+        properties: { column: { type: "string" }, bins: { type: "number" } },
+        required: ["column"],
+      },
+    },
+  },
+];
+
+async function runTool(name: string, args: any, file_hash: string) {
+  const resp = await fetch(`${FUNCTIONS_BASE}/compute-tools`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${Deno.env.get("SUPABASE_ANON_KEY")}`,
+    },
+    body: JSON.stringify({ tool: name, args, file_hash }),
+  });
+  const json = await resp.json();
+  return json.result ?? json.error ?? null;
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    const { messages, dataset_context } = await req.json();
+    const { messages, dataset_context, file_hash } = await req.json();
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
 
     const systemPrompt = buildSystemPrompt(dataset_context);
+    const enableTools = !!file_hash;
+
+    // Tool-calling loop: up to 4 rounds of tool execution before final stream.
+    const convo: any[] = [
+      { role: "system", content: systemPrompt },
+      ...messages,
+    ];
+
+    if (enableTools) {
+      for (let round = 0; round < 4; round++) {
+        const toolResp = await fetch(
+          "https://ai.gateway.lovable.dev/v1/chat/completions",
+          {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${LOVABLE_API_KEY}`,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              model: "google/gemini-3.1-pro-preview",
+              messages: convo,
+              tools: TOOL_DEFS,
+              tool_choice: "auto",
+              stream: false,
+            }),
+          }
+        );
+        if (!toolResp.ok) {
+          if (toolResp.status === 429 || toolResp.status === 402) {
+            return new Response(
+              JSON.stringify({ error: toolResp.status === 429 ? "Rate limited — try again shortly." : "AI credits exhausted." }),
+              { status: toolResp.status, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+            );
+          }
+          break; // fall through to streaming attempt without tools
+        }
+        const j = await toolResp.json();
+        const msg = j.choices?.[0]?.message;
+        if (!msg) break;
+        const calls = msg.tool_calls || [];
+        if (!calls.length) {
+          // No more tool calls — let the model stream a final reply now.
+          break;
+        }
+        convo.push(msg);
+        for (const call of calls) {
+          let args: any = {};
+          try { args = JSON.parse(call.function.arguments || "{}"); } catch {}
+          const result = await runTool(call.function.name, args, file_hash);
+          convo.push({
+            role: "tool",
+            tool_call_id: call.id,
+            content: JSON.stringify(result).slice(0, 8000),
+          });
+        }
+      }
+    }
 
     const response = await fetch(
       "https://ai.gateway.lovable.dev/v1/chat/completions",
@@ -28,10 +201,7 @@ serve(async (req) => {
         },
         body: JSON.stringify({
           model: "google/gemini-3.1-pro-preview",
-          messages: [
-            { role: "system", content: systemPrompt },
-            ...messages,
-          ],
+          messages: convo,
           stream: true,
           reasoning: { effort: "high" },
         }),
@@ -77,6 +247,7 @@ function buildSystemPrompt(ctx: any): string {
   }
 
   const { fileName, rowCount, colCount, healthScore, profile, correlations, sampleData, advancedContext } = ctx;
+  // sampleData is now optional; tool-calling provides real numbers on demand.
 
   const sizeCategory = rowCount < 100 ? 'small' : rowCount < 1000 ? 'medium' : rowCount < 10000 ? 'large' : 'very_large';
 
@@ -152,8 +323,27 @@ ${sizeInstructions}
 
 ${CAPABILITIES}
 
-${RULES}`;
+${RULES}
+
+${TOOL_USAGE_PROMPT}`;
 }
+
+const TOOL_USAGE_PROMPT = `## REAL COMPUTATION TOOLS (USE THEM!)
+You have access to function tools that execute on the actual dataset, not the sample.
+**NEVER fabricate numbers** — if you need an exact mean, group total, correlation, t-test, outlier count,
+or histogram, CALL THE TOOL and use the result.
+
+Available tools:
+- describe_column(column) — exact mean/std/quartiles or top categories
+- group_by_aggregate(group_col, value_col, agg) — sum/mean/median/min/max/count by group
+- correlation(col_a, col_b) — Pearson r on real data
+- ttest(value_col, group_col, group_a, group_b) — Welch's two-sample t-test
+- outliers(column, method) — IQR or z-score outlier detection
+- filter_count(column, op, value) — count + sample of rows matching a filter
+- histogram(column, bins) — bin counts for distributions
+
+After calling tools, weave their actual results into your narrative and artifacts.
+If a number came from a tool, that number is real and trustworthy.`;
 
 // ─── Prompt fragments ────────────────────────────────────────────
 

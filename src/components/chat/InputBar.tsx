@@ -1,7 +1,7 @@
 import { useState, useRef, useCallback, useMemo } from 'react';
 import { useDatumStore } from '@/store/datum.store';
 import { parseFile } from '@/lib/parsers';
-import { Upload, Sparkles, ArrowUp, Brain, BarChart3, Wrench, Settings, Lightbulb, Bug, BookOpen, FileText } from 'lucide-react';
+import { Upload, Sparkles, ArrowUp, Brain, BarChart3, Wrench, Settings, Lightbulb, Bug, BookOpen, FileText, Square } from 'lucide-react';
 
 function getSmartSuggestions(profile: any[] | null): { text: string; prompt: string }[] {
   if (!profile) return [];
@@ -35,7 +35,7 @@ function getSmartSuggestions(profile: any[] | null): { text: string; prompt: str
 }
 
 export function InputBar({ onSend }: { onSend?: (text: string) => void }) {
-  const { isAiLoading, isLoaded, fileName, profile, ingest, sendMessage } = useDatumStore();
+  const { isAiLoading, isLoaded, fileName, profile, ingest, sendMessage, cancelStream, connectionStatus } = useDatumStore();
   const [text, setText] = useState('');
   const [dragOver, setDragOver] = useState(false);
   const [focused, setFocused] = useState(false);
@@ -123,10 +123,17 @@ export function InputBar({ onSend }: { onSend?: (text: string) => void }) {
             rows={1}
             className="flex-1 bg-transparent text-sm text-foreground placeholder:text-muted-foreground/50 resize-none outline-none min-h-[24px] max-h-[120px] py-1 leading-relaxed"
           />
-          <button onClick={handleSend} disabled={!text.trim() || isAiLoading}
-            className="w-9 h-9 rounded-xl bg-primary text-primary-foreground flex items-center justify-center shrink-0 disabled:opacity-30 hover:brightness-110 hover:shadow-md transition-all duration-200">
-            <ArrowUp className="w-4 h-4" strokeWidth={2.5} />
-          </button>
+          {isAiLoading ? (
+            <button onClick={cancelStream}
+              className="w-9 h-9 rounded-xl bg-destructive text-destructive-foreground flex items-center justify-center shrink-0 hover:brightness-110 transition-all" title="Stop">
+              <Square className="w-3.5 h-3.5" fill="currentColor" />
+            </button>
+          ) : (
+            <button onClick={handleSend} disabled={!text.trim()}
+              className="w-9 h-9 rounded-xl bg-primary text-primary-foreground flex items-center justify-center shrink-0 disabled:opacity-30 hover:brightness-110 hover:shadow-md transition-all duration-200">
+              <ArrowUp className="w-4 h-4" strokeWidth={2.5} />
+            </button>
+          )}
         </div>
 
         {/* Action buttons */}
@@ -176,6 +183,9 @@ export function InputBar({ onSend }: { onSend?: (text: string) => void }) {
 
       <p className="text-center text-[10px] text-muted-foreground/60 mt-2.5">
         Enter to send · Shift+Enter for new line · Drag & drop files
+        {connectionStatus !== 'idle' && (
+          <span className="ml-2">· <span className={connectionStatus === 'error' ? 'text-destructive' : 'text-primary'}>{connectionStatus}</span></span>
+        )}
       </p>
 
       <input ref={fileRef} type="file" accept=".csv,.json,.xlsx,.xls,.tsv" multiple className="hidden"

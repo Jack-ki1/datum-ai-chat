@@ -44,6 +44,7 @@ export interface Session {
   id: string;
   title: string;
   fileName?: string;
+  fileHash?: string;
   rowCount?: number;
   colCount?: number;
   createdAt: string;

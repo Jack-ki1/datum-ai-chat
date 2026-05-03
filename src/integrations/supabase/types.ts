@@ -14,7 +14,124 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      compute_jobs: {
+        Row: {
+          created_at: string
+          error: string | null
+          file_hash: string | null
+          id: string
+          job_type: string
+          params: Json | null
+          result: Json | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          error?: string | null
+          file_hash?: string | null
+          id?: string
+          job_type: string
+          params?: Json | null
+          result?: Json | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          error?: string | null
+          file_hash?: string | null
+          id?: string
+          job_type?: string
+          params?: Json | null
+          result?: Json | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "compute_jobs_file_hash_fkey"
+            columns: ["file_hash"]
+            isOneToOne: false
+            referencedRelation: "datasets"
+            referencedColumns: ["file_hash"]
+          },
+        ]
+      }
+      dataset_profiles: {
+        Row: {
+          advanced: Json | null
+          computed_at: string
+          correlations: Json | null
+          file_hash: string
+          health_score: number | null
+          id: string
+          profile: Json
+        }
+        Insert: {
+          advanced?: Json | null
+          computed_at?: string
+          correlations?: Json | null
+          file_hash: string
+          health_score?: number | null
+          id?: string
+          profile: Json
+        }
+        Update: {
+          advanced?: Json | null
+          computed_at?: string
+          correlations?: Json | null
+          file_hash?: string
+          health_score?: number | null
+          id?: string
+          profile?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dataset_profiles_file_hash_fkey"
+            columns: ["file_hash"]
+            isOneToOne: true
+            referencedRelation: "datasets"
+            referencedColumns: ["file_hash"]
+          },
+        ]
+      }
+      datasets: {
+        Row: {
+          col_count: number | null
+          created_at: string
+          file_ext: string
+          file_hash: string
+          file_name: string
+          id: string
+          row_count: number | null
+          size_bytes: number | null
+          storage_path: string
+        }
+        Insert: {
+          col_count?: number | null
+          created_at?: string
+          file_ext: string
+          file_hash: string
+          file_name: string
+          id?: string
+          row_count?: number | null
+          size_bytes?: number | null
+          storage_path: string
+        }
+        Update: {
+          col_count?: number | null
+          created_at?: string
+          file_ext?: string
+          file_hash?: string
+          file_name?: string
+          id?: string
+          row_count?: number | null
+          size_bytes?: number | null
+          storage_path?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
