@@ -3,23 +3,29 @@ const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/datum-chat`;
 interface StreamChatParams {
   messages: { role: string; content: string }[];
   datasetContext: any;
+  fileHash?: string;
+  signal?: AbortSignal;
+  onConnect?: () => void;
   onDelta: (text: string) => void;
   onDone: () => void;
   onError: (error: string) => void;
 }
 
-export async function streamChat({ messages, datasetContext, onDelta, onDone, onError }: StreamChatParams) {
+export async function streamChat({ messages, datasetContext, fileHash, signal, onConnect, onDelta, onDone, onError }: StreamChatParams) {
   const resp = await fetch(CHAT_URL, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
       Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
     },
+    signal,
     body: JSON.stringify({
       messages: messages.map(m => ({ role: m.role, content: m.content })),
       dataset_context: datasetContext,
+      file_hash: fileHash,
     }),
   });
+  onConnect?.();
 
   if (!resp.ok) {
     let errMsg = 'AI service error';
