@@ -9,6 +9,14 @@ function uid() { return crypto.randomUUID(); }
 function now() { return new Date().toISOString(); }
 
 const MAX_PERSISTED_SESSIONS = 25; // LRU cap
+const MAX_FILE_BYTES = 500 * 1024 * 1024; // 500MB
+
+export interface ExtraDataset {
+  fileHash: string;
+  fileName: string;
+  rowCount: number;
+  colCount: number;
+}
 
 interface DatumStore {
   // In-memory dataset (NOT persisted to localStorage)
@@ -24,6 +32,11 @@ interface DatumStore {
   isLoaded: boolean;
   isIngesting: boolean;
   ingestError: string | null;
+  /** Multi-file: every successfully ingested dataset for this session */
+  extraDatasets: ExtraDataset[];
+  /** Live ingest progress (0-100) — UI-only */
+  ingestProgress: number;
+  ingestStage: 'idle' | 'parsing' | 'profiling';
 
   // Connection / async state
   connectionStatus: 'idle' | 'connecting' | 'streaming' | 'error';
@@ -40,6 +53,9 @@ interface DatumStore {
 
   // Actions
   ingest: (data: Record<string, any>[], name: string) => Promise<void>;
+  setIngestProgress: (pct: number, stage?: 'parsing' | 'profiling') => void;
+  switchActiveDataset: (fileHash: string) => Promise<void>;
+  removeExtraDataset: (fileHash: string) => void;
   hydrateActiveDataset: () => Promise<void>;
   sendMessage: (content: string) => Promise<void>;
   cancelStream: () => void;
@@ -92,6 +108,9 @@ export const useDatumStore = create<DatumStore>()(
         profile: null, correlations: null, advanced: null, healthScore: 0,
         fileName: '', fileHash: null, isLoaded: false,
         isIngesting: false, ingestError: null,
+        extraDatasets: [],
+        ingestProgress: 0,
+        ingestStage: 'idle' as const,
         connectionStatus: 'idle' as const,
         abortController: null,
         sessions: [{ id: initialSessionId, title: 'New Session', createdAt: now(), messages: [] }],
@@ -100,11 +119,11 @@ export const useDatumStore = create<DatumStore>()(
         changelog: [], changelogOpen: false,
 
         ingest: async (data, name) => {
-          set({ isIngesting: true, ingestError: null });
+          set({ isIngesting: true, ingestError: null, ingestStage: 'profiling', ingestProgress: 50 });
           try {
             const res = await ingestDataset(data, name);
             const welcome = generateWelcome(res.row_count, res.profile, res.file_name, res.health_score);
-            const { activeSessionId, sessions } = get();
+            const { activeSessionId, sessions, extraDatasets, isLoaded } = get();
             const msgs = [welcome];
             const entry: ChangelogEntry = {
               id: uid(),
@@ -112,6 +131,12 @@ export const useDatumStore = create<DatumStore>()(
               description: `Uploaded ${name} (${res.row_count} rows)${res.cached ? ' [cached profile]' : ''}`,
               timestamp: now(),
             };
+            // Append to extraDatasets so multi-file uploads keep both around.
+            const others = extraDatasets.filter(d => d.fileHash !== res.file_hash);
+            const nextExtras: ExtraDataset[] = [
+              ...others,
+              { fileHash: res.file_hash, fileName: res.file_name, rowCount: res.row_count, colCount: res.col_count },
+            ];
             set({
               dataset: data,
               profile: res.profile,
@@ -122,6 +147,9 @@ export const useDatumStore = create<DatumStore>()(
               fileHash: res.file_hash,
               isLoaded: true,
               isIngesting: false,
+              ingestProgress: 100,
+              ingestStage: 'idle',
+              extraDatasets: nextExtras,
               messages: msgs,
               changelog: [...get().changelog, entry],
               sessions: sessions.map(s => s.id === activeSessionId
@@ -137,10 +165,40 @@ export const useDatumStore = create<DatumStore>()(
                 : s),
             });
           } catch (e) {
-            set({ isIngesting: false, ingestError: e instanceof Error ? e.message : 'Ingest failed' });
+            set({ isIngesting: false, ingestStage: 'idle', ingestProgress: 0, ingestError: e instanceof Error ? e.message : 'Ingest failed' });
             throw e;
           }
         },
+
+        setIngestProgress: (pct, stage) => set({
+          ingestProgress: pct,
+          ...(stage ? { ingestStage: stage, isIngesting: true } : {}),
+        }),
+
+        switchActiveDataset: async (fileHash) => {
+          const extra = get().extraDatasets.find(d => d.fileHash === fileHash);
+          if (!extra) return;
+          try {
+            const rows = await loadDatasetRows(fileHash);
+            const res = await ingestDataset(rows, extra.fileName);
+            set({
+              dataset: rows,
+              profile: res.profile,
+              correlations: res.correlations,
+              advanced: res.advanced,
+              healthScore: res.health_score,
+              fileName: res.file_name,
+              fileHash: res.file_hash,
+              isLoaded: true,
+            });
+          } catch (e) {
+            console.warn('switchActiveDataset failed:', e);
+          }
+        },
+
+        removeExtraDataset: (fileHash) => set(s => ({
+          extraDatasets: s.extraDatasets.filter(d => d.fileHash !== fileHash),
+        })),
 
         hydrateActiveDataset: async () => {
           const { fileHash, dataset } = get();
