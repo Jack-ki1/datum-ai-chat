@@ -1,24 +1,35 @@
 import { useState, useRef, useCallback } from 'react';
-import { Upload, FileSpreadsheet, X } from 'lucide-react';
+import { Upload, FileSpreadsheet } from 'lucide-react';
 import { parseFile } from '@/lib/parsers';
 import { useDatumStore } from '@/store/datum.store';
+
+const MAX_BYTES = 500 * 1024 * 1024; // 500MB
 
 export function DataUpload() {
   const { ingest } = useDatumStore();
   const [dragOver, setDragOver] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [progress, setProgress] = useState(0);
+  const [stage, setStage] = useState<'idle' | 'parsing' | 'profiling'>('idle');
   const fileRef = useRef<HTMLInputElement>(null);
 
   const handleFile = useCallback(async (file: File) => {
-    if (file.size > 10 * 1024 * 1024) { alert('File too large (max 10MB)'); return; }
+    if (file.size > MAX_BYTES) { alert(`File too large (max ${Math.round(MAX_BYTES / 1024 / 1024)}MB)`); return; }
     setLoading(true);
+    setStage('parsing');
+    setProgress(0);
     try {
-      const data = await parseFile(file);
+      const data = await parseFile(file, {
+        onProgress: ({ pct }) => setProgress(pct),
+      });
+      setStage('profiling');
       await ingest(data, file.name);
     } catch (e) {
       alert('Failed to parse file: ' + (e as Error).message);
     } finally {
       setLoading(false);
+      setStage('idle');
+      setProgress(0);
     }
   }, [ingest]);
 
@@ -49,16 +60,24 @@ export function DataUpload() {
           </div>
           <div>
             <p className="text-sm font-medium text-foreground">
-              {loading ? 'Processing…' : 'Drop your dataset here'}
+              {loading
+                ? stage === 'parsing' ? `Parsing… ${progress}%` : 'Profiling on server…'
+                : 'Drop your dataset here'}
             </p>
-            <p className="text-xs text-muted-foreground mt-1">CSV, XLSX, or JSON — up to 10MB</p>
+            <p className="text-xs text-muted-foreground mt-1">CSV, TSV, XLSX, or JSON — up to 500MB</p>
+            {loading && (
+              <div className="w-full h-1.5 bg-muted rounded-full overflow-hidden mt-3">
+                <div className="h-full bg-primary transition-all duration-150"
+                  style={{ width: `${stage === 'profiling' ? 100 : progress}%` }} />
+              </div>
+            )}
           </div>
           <div className="flex items-center gap-2 mt-2">
             <FileSpreadsheet className="w-3.5 h-3.5 text-muted-foreground" />
             <span className="text-[11px] text-muted-foreground">or click to browse</span>
           </div>
         </div>
-        <input ref={fileRef} type="file" accept=".csv,.xlsx,.xls,.json" className="hidden" onChange={e => e.target.files?.[0] && handleFile(e.target.files[0])} />
+        <input ref={fileRef} type="file" accept=".csv,.tsv,.xlsx,.xls,.json" className="hidden" onChange={e => e.target.files?.[0] && handleFile(e.target.files[0])} />
       </div>
     </div>
   );

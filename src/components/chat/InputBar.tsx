@@ -1,7 +1,9 @@
 import { useState, useRef, useCallback, useMemo } from 'react';
 import { useDatumStore } from '@/store/datum.store';
 import { parseFile } from '@/lib/parsers';
-import { Upload, Sparkles, ArrowUp, Brain, BarChart3, Wrench, Settings, Lightbulb, Bug, BookOpen, FileText, Square } from 'lucide-react';
+import { Upload, Sparkles, ArrowUp, Brain, BarChart3, Wrench, Settings, Lightbulb, Bug, BookOpen, FileText, Square, Database, X } from 'lucide-react';
+
+const MAX_BYTES = 500 * 1024 * 1024; // 500MB
 
 function getSmartSuggestions(profile: any[] | null): { text: string; prompt: string }[] {
   if (!profile) return [];
@@ -35,7 +37,11 @@ function getSmartSuggestions(profile: any[] | null): { text: string; prompt: str
 }
 
 export function InputBar({ onSend }: { onSend?: (text: string) => void }) {
-  const { isAiLoading, isLoaded, fileName, profile, ingest, sendMessage, cancelStream, connectionStatus } = useDatumStore();
+  const {
+    isAiLoading, isLoaded, fileName, profile, ingest, sendMessage, cancelStream, connectionStatus,
+    extraDatasets, fileHash, switchActiveDataset, removeExtraDataset,
+    setIngestProgress, ingestProgress, ingestStage,
+  } = useDatumStore();
   const [text, setText] = useState('');
   const [dragOver, setDragOver] = useState(false);
   const [focused, setFocused] = useState(false);
@@ -55,12 +61,22 @@ export function InputBar({ onSend }: { onSend?: (text: string) => void }) {
   }, [text, isAiLoading, sendMessage, onSend]);
 
   const handleFile = useCallback(async (file: File) => {
-    if (file.size > 10 * 1024 * 1024) { alert('File too large (max 10MB)'); return; }
+    if (file.size > MAX_BYTES) {
+      alert(`File too large (max ${Math.round(MAX_BYTES / 1024 / 1024)}MB)`);
+      return;
+    }
     try {
-      const data = await parseFile(file);
-      ingest(data, file.name);
-    } catch (e) { alert('Failed to parse file: ' + (e as Error).message); }
-  }, [ingest]);
+      setIngestProgress(0, 'parsing');
+      const data = await parseFile(file, {
+        onProgress: ({ pct }) => setIngestProgress(pct, 'parsing'),
+      });
+      setIngestProgress(100, 'profiling');
+      await ingest(data, file.name);
+    } catch (e) {
+      setIngestProgress(0);
+      alert('Failed to parse file: ' + (e as Error).message);
+    }
+  }, [ingest, setIngestProgress]);
 
   const onDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault(); setDragOver(false);
@@ -109,6 +125,43 @@ export function InputBar({ onSend }: { onSend?: (text: string) => void }) {
         onDragLeave={() => setDragOver(false)}
         onDrop={onDrop}
       >
+        {/* Loaded datasets bar (multi-file) */}
+        {extraDatasets.length > 0 && (
+          <div className="flex items-center gap-1.5 px-3 pt-2.5 overflow-x-auto scrollbar-hide">
+            <Database className="w-3 h-3 text-muted-foreground shrink-0" />
+            {extraDatasets.map(d => {
+              const active = d.fileHash === fileHash;
+              return (
+                <span key={d.fileHash}
+                  className={`group inline-flex items-center gap-1 pl-2 pr-1 py-0.5 rounded-md text-[10px] border transition-colors ${
+                    active ? 'bg-primary/10 border-primary/40 text-primary' : 'bg-muted border-border text-muted-foreground hover:text-foreground'
+                  }`}>
+                  <button onClick={() => !active && switchActiveDataset(d.fileHash)}
+                    className="font-mono truncate max-w-[140px]" title={`${d.fileName} (${d.rowCount.toLocaleString()} rows)`}>
+                    {d.fileName}
+                  </button>
+                  <button onClick={() => removeExtraDataset(d.fileHash)}
+                    className="opacity-0 group-hover:opacity-100 hover:text-destructive transition-opacity" aria-label="Remove">
+                    <X className="w-2.5 h-2.5" />
+                  </button>
+                </span>
+              );
+            })}
+          </div>
+        )}
+        {/* Live ingest progress */}
+        {ingestStage !== 'idle' && (
+          <div className="px-3 pt-2">
+            <div className="flex items-center justify-between text-[10px] text-muted-foreground mb-1">
+              <span>{ingestStage === 'parsing' ? 'Parsing file…' : 'Profiling on server…'}</span>
+              <span className="font-mono">{ingestProgress}%</span>
+            </div>
+            <div className="h-1 bg-muted rounded-full overflow-hidden">
+              <div className="h-full bg-primary transition-all duration-150" style={{ width: `${ingestProgress}%` }} />
+            </div>
+          </div>
+        )}
+
         {/* Textarea + send */}
         <div className="flex items-end gap-3 px-4 py-3">
           <textarea

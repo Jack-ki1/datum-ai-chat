@@ -1,52 +1,51 @@
-import Papa from 'papaparse';
-import * as XLSX from 'xlsx';
+/**
+ * Parse a CSV/TSV/XLSX/JSON file in a Web Worker (off the main thread)
+ * with progress reporting. Replaces the old synchronous, UI-blocking parser.
+ */
 
-export function parseFile(file: File): Promise<Record<string, any>[]> {
-  const ext = file.name.split('.').pop()?.toLowerCase();
-  if (ext === 'csv' || ext === 'tsv') return parseCSV(file);
-  if (ext === 'xlsx' || ext === 'xls') return parseExcel(file);
-  if (ext === 'json') return parseJSON(file);
-  return Promise.reject(new Error('Unsupported file type: ' + ext));
+export interface ParseProgress {
+  loaded: number;
+  total: number;
+  pct: number;
 }
 
-function parseCSV(file: File): Promise<Record<string, any>[]> {
-  return new Promise((resolve, reject) => {
-    Papa.parse(file, {
-      header: true,
-      dynamicTyping: true,
-      skipEmptyLines: true,
-      complete: (r) => resolve(r.data as Record<string, any>[]),
-      error: (e) => reject(e),
-    });
-  });
+export interface ParseOptions {
+  onProgress?: (p: ParseProgress) => void;
 }
 
-function parseExcel(file: File): Promise<Record<string, any>[]> {
+let _worker: Worker | null = null;
+let _nextId = 1;
+
+function getWorker(): Worker {
+  if (!_worker) {
+    _worker = new Worker(new URL('../workers/parse.worker.ts', import.meta.url), { type: 'module' });
+  }
+  return _worker;
+}
+
+export function parseFile(
+  file: File,
+  opts: ParseOptions = {}
+): Promise<Record<string, any>[]> {
   return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      try {
-        const wb = XLSX.read(e.target?.result, { type: 'array' });
-        const ws = wb.Sheets[wb.SheetNames[0]];
-        resolve(XLSX.utils.sheet_to_json(ws) as Record<string, any>[]);
-      } catch (err) { reject(err); }
+    const w = getWorker();
+    const id = _nextId++;
+    const handler = (e: MessageEvent) => {
+      const msg = e.data;
+      if (msg?.id !== id) return;
+      if (msg.type === 'progress') {
+        const total = msg.total || file.size || 1;
+        opts.onProgress?.({ loaded: msg.loaded, total, pct: Math.min(100, Math.round((msg.loaded / total) * 100)) });
+      } else if (msg.type === 'done') {
+        w.removeEventListener('message', handler);
+        opts.onProgress?.({ loaded: file.size, total: file.size, pct: 100 });
+        resolve(msg.rows as Record<string, any>[]);
+      } else if (msg.type === 'error') {
+        w.removeEventListener('message', handler);
+        reject(new Error(msg.error || 'Parse failed'));
+      }
     };
-    reader.onerror = reject;
-    reader.readAsArrayBuffer(file);
-  });
-}
-
-function parseJSON(file: File): Promise<Record<string, any>[]> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      try {
-        let d = JSON.parse(e.target?.result as string);
-        if (!Array.isArray(d)) d = [d];
-        resolve(d);
-      } catch (err) { reject(err); }
-    };
-    reader.onerror = reject;
-    reader.readAsText(file);
+    w.addEventListener('message', handler);
+    w.postMessage({ id, type: 'parse', file });
   });
 }
