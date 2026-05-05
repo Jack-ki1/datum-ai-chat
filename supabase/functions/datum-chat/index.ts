@@ -107,6 +107,26 @@ const TOOL_DEFS = [
       },
     },
   },
+  {
+    type: "function",
+    function: {
+      name: "train_classifier",
+      description:
+        "Trains a real classifier (Naive Bayes) on a 70/30 train/test split. Returns REAL accuracy, confusion matrix, per-class precision/recall/F1, and permutation feature importance. ALWAYS call this for any model_card, confusion_matrix, or feature_importance artifact — never fabricate model metrics.",
+      parameters: {
+        type: "object",
+        properties: {
+          target: { type: "string", description: "Column to predict" },
+          features: {
+            type: "array",
+            items: { type: "string" },
+            description: "Feature columns (omit to auto-pick all non-target columns)",
+          },
+        },
+        required: ["target"],
+      },
+    },
+  },
 ];
 
 async function runTool(name: string, args: any, file_hash: string) {
@@ -331,7 +351,8 @@ ${TOOL_USAGE_PROMPT}`;
 const TOOL_USAGE_PROMPT = `## REAL COMPUTATION TOOLS (USE THEM!)
 You have access to function tools that execute on the actual dataset, not the sample.
 **NEVER fabricate numbers** — if you need an exact mean, group total, correlation, t-test, outlier count,
-or histogram, CALL THE TOOL and use the result.
+histogram, OR ANY MODEL METRIC (accuracy, precision, recall, F1, feature importance, confusion matrix),
+CALL THE TOOL and use the result. Sample data is NOT provided — you must call tools.
 
 Available tools:
 - describe_column(column) — exact mean/std/quartiles or top categories
@@ -341,9 +362,18 @@ Available tools:
 - outliers(column, method) — IQR or z-score outlier detection
 - filter_count(column, op, value) — count + sample of rows matching a filter
 - histogram(column, bins) — bin counts for distributions
+- train_classifier(target, features?) — REAL train/test split, returns confusion matrix, accuracy, precision/recall/F1, permutation feature importance. MUST be called before emitting any confusion_matrix/feature_importance/model_card artifact.
 
 After calling tools, weave their actual results into your narrative and artifacts.
-If a number came from a tool, that number is real and trustworthy.`;
+If a number came from a tool, that number is real and trustworthy.
+
+## CRITICAL: NO FABRICATED MODEL METRICS
+If a user asks "build a model" / "predict X" / "show feature importance":
+1. Call train_classifier(target, features?) FIRST — this is non-negotiable.
+2. Then emit the artifact, copying numbers VERBATIM from the tool result.
+3. The tool returns matrix, accuracy, precision, recall, f1, feature_importance, labels — use them all.
+4. Set "verified": true on the artifact JSON when (and only when) the numbers came from train_classifier.
+5. NEVER invent confusion_matrix or feature_importance numbers. If train_classifier fails, say so — don't guess.`;
 
 // ─── Prompt fragments ────────────────────────────────────────────
 
