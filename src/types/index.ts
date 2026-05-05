@@ -1,6 +1,9 @@
 export interface ColumnProfile {
   col: string;
   type: 'numeric' | 'categorical' | 'text' | 'datetime' | 'empty';
+  /** Fine-grained semantic role (identifier/zip/phone/email/url/currency/boolean/...) */
+  semantic?: 'identifier' | 'zip' | 'phone' | 'email' | 'url' | 'currency'
+    | 'boolean' | 'categorical' | 'numeric' | 'datetime' | 'text' | 'empty';
   nullCount: number;
   uniqueCount: number;
   total: number;
