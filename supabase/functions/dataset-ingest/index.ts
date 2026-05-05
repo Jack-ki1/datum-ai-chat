@@ -26,19 +26,66 @@ async function sha256(text: string): Promise<string> {
 }
 
 // ── pure-TS stats (mirrors src/lib/stats.ts) ───────────────────────
-function detectType(values: any[]): string {
+const ZIP_RE = /^\d{5}(-\d{4})?$/;
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const URL_RE = /^(https?:\/\/|www\.)/i;
+const CURRENCY_RE = /^[\$€£¥₹]\s?-?\d/;
+const BOOL_VALUES = new Set(["true","false","yes","no","y","n","0","1","t","f"]);
+
+function looksNumeric(v: any) {
+  if (v === "" || v === null || v === undefined || typeof v === "boolean") return false;
+  const n = Number(v); return !isNaN(n) && isFinite(n);
+}
+
+function detectSemantic(col: string, values: any[]): string {
   const nn = values.filter((v) => v !== null && v !== undefined && v !== "");
   if (!nn.length) return "empty";
-  const numCount = nn.filter(
-    (v) => !isNaN(Number(v)) && v !== "" && v !== true && v !== false
-  ).length;
-  if (numCount / nn.length > 0.8) return "numeric";
-  const uniq = new Set(nn.map(String));
-  if (uniq.size / nn.length < 0.25 && uniq.size <= 40) return "categorical";
-  const dateCount = nn.filter(
-    (v) => !isNaN(Date.parse(String(v))) && String(v).length > 4
-  ).length;
-  if (dateCount / nn.length > 0.8) return "datetime";
+  const total = nn.length;
+  const strs = nn.map(String);
+  const uniqueRatio = new Set(strs).size / total;
+  const isIdName = /(^id$|_id$|^uuid$|guid|hash|key)/i.test(col);
+  const isZipName = /(^zip$|zipcode|postal|^postcode$)/i.test(col);
+  const isEmailName = /(email|e-mail)/i.test(col);
+  const isUrlName = /(url|link|href|website|domain)/i.test(col);
+  const isCurrencyName = /(price|cost|revenue|amount|salary|wage|fee|charge|usd|eur|gbp)/i.test(col);
+
+  if (isIdName && uniqueRatio > 0.9) return "identifier";
+  if (uniqueRatio > 0.95 && strs.every((s) => s.length >= 6 && s.length <= 64)) return "identifier";
+
+  const ratio = (re: RegExp) => strs.filter((s) => re.test(s)).length / total;
+  const boolRatio = strs.filter((s) => BOOL_VALUES.has(s.toLowerCase())).length / total;
+
+  if (isZipName || ratio(ZIP_RE) > 0.8) return "zip";
+  if (isEmailName || ratio(EMAIL_RE) > 0.8) return "email";
+  if (isUrlName || ratio(URL_RE) > 0.8) return "url";
+  if (ratio(CURRENCY_RE) > 0.8 || (isCurrencyName && nn.every(looksNumeric))) return "currency";
+  if (boolRatio > 0.95) return "boolean";
+
+  const numCount = nn.filter(looksNumeric).length;
+  if (numCount / total > 0.9) {
+    if (uniqueRatio > 0.95 && strs.every((s) => /^\d+$/.test(s))) return "identifier";
+    return "numeric";
+  }
+  const dateCount = nn.filter((v) => !isNaN(Date.parse(String(v))) && String(v).length > 4).length;
+  if (dateCount / total > 0.85) return "datetime";
+  if (uniqueRatio < 0.25 && new Set(strs).size <= 50) return "categorical";
+  return "text";
+}
+
+function quantile(sorted: number[], q: number): number {
+  if (!sorted.length) return NaN;
+  if (sorted.length === 1) return sorted[0];
+  const i = (sorted.length - 1) * q;
+  const lo = Math.floor(i), hi = Math.ceil(i);
+  if (lo === hi) return sorted[lo];
+  return sorted[lo] + (sorted[hi] - sorted[lo]) * (i - lo);
+}
+
+function semanticToType(s: string): string {
+  if (s === "numeric" || s === "currency") return "numeric";
+  if (s === "datetime") return "datetime";
+  if (s === "categorical" || s === "boolean") return "categorical";
+  if (s === "empty") return "empty";
   return "text";
 }
 
@@ -47,26 +94,27 @@ function buildProfile(data: Record<string, any>[]): any[] {
   const cols = Object.keys(data[0]);
   return cols.map((col) => {
     const values = data.map((r) => r[col]);
-    const type = detectType(values);
+    const semantic = detectSemantic(col, values);
+    const type = semanticToType(semantic);
     const total = values.length;
     const nullCount = values.filter(
       (v) => v === null || v === undefined || v === ""
     ).length;
     const nn = values.filter((v) => v !== null && v !== undefined && v !== "");
     const uniqueCount = new Set(nn.map(String)).size;
-    const p: any = { col, type, nullCount, uniqueCount, total };
+    const p: any = { col, type, semantic, nullCount, uniqueCount, total };
     if (type === "numeric") {
       const nums = nn.map(Number).filter((n) => !isNaN(n)).sort((a, b) => a - b);
       if (nums.length) {
         p.min = nums[0];
         p.max = nums[nums.length - 1];
         p.mean = nums.reduce((a, b) => a + b, 0) / nums.length;
-        p.median = nums[Math.floor(nums.length / 2)];
-        p.std = Math.sqrt(
-          nums.reduce((s, v) => s + (v - p.mean) ** 2, 0) / nums.length
-        );
-        p.q1 = nums[Math.floor(nums.length * 0.25)];
-        p.q3 = nums[Math.floor(nums.length * 0.75)];
+        p.median = quantile(nums, 0.5);
+        p.std = nums.length > 1
+          ? Math.sqrt(nums.reduce((s, v) => s + (v - p.mean) ** 2, 0) / (nums.length - 1))
+          : 0;
+        p.q1 = quantile(nums, 0.25);
+        p.q3 = quantile(nums, 0.75);
         const iqr = p.q3 - p.q1;
         p.outliers = nums.filter(
           (v) => v < p.q1 - 1.5 * iqr || v > p.q3 + 1.5 * iqr
@@ -90,28 +138,36 @@ function buildProfile(data: Record<string, any>[]): any[] {
   });
 }
 
-function pearson(data: any[], a: string, b: string): number {
+function pearson(data: any[], a: string, b: string): { r: number; n: number } {
   const pairs = data
     .map((r) => [Number(r[a]), Number(r[b])])
     .filter(([x, y]) => !isNaN(x) && !isNaN(y));
-  if (pairs.length < 3) return 0;
   const n = pairs.length;
+  if (n < 3) return { r: NaN, n };
   const sa = pairs.reduce((s, [x]) => s + x, 0);
   const sb = pairs.reduce((s, [, y]) => s + y, 0);
   const sab = pairs.reduce((s, [x, y]) => s + x * y, 0);
   const sa2 = pairs.reduce((s, [x]) => s + x * x, 0);
   const sb2 = pairs.reduce((s, [, y]) => s + y * y, 0);
   const d = Math.sqrt((n * sa2 - sa ** 2) * (n * sb2 - sb ** 2));
-  return d === 0 ? 0 : Math.round(((n * sab - sa * sb) / d) * 1000) / 1000;
+  if (d === 0) return { r: 0, n };
+  return { r: Math.round(((n * sab - sa * sb) / d) * 1000) / 1000, n };
 }
 
 function buildAdvanced(data: any[], profile: any[]) {
-  const numCols = profile.filter((p) => p.type === "numeric").map((p) => p.col);
+  // Only correlate truly numeric columns — never identifiers/zip/currency-as-text
+  const numCols = profile
+    .filter((p) => p.type === "numeric" && p.semantic !== "identifier")
+    .map((p) => p.col);
   const correlations: any[] = [];
   for (let i = 0; i < numCols.length; i++) {
     for (let j = i + 1; j < numCols.length; j++) {
-      const r = pearson(data, numCols[i], numCols[j]);
-      if (Math.abs(r) > 0.4) correlations.push({ colA: numCols[i], colB: numCols[j], r });
+      const { r, n } = pearson(data, numCols[i], numCols[j]);
+      if (!isNaN(r) && Math.abs(r) > 0.4) {
+        const out: any = { colA: numCols[i], colB: numCols[j], r, n };
+        if (n < 10) out.warning = `Small sample (n=${n})`;
+        correlations.push(out);
+      }
     }
   }
   correlations.sort((a, b) => Math.abs(b.r) - Math.abs(a.r));
