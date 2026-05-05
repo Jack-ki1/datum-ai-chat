@@ -234,7 +234,9 @@ export const useDatumStore = create<DatumStore>()(
             profile,
             correlations,
             advancedContext: advanced,
-            sampleData: (get().dataset || []).slice(0, 20),
+            // Privacy + accuracy: never ship raw rows to the LLM.
+            // The model must call compute tools for any number it needs.
+            sampleData: [],
           } : null;
 
           const conversationHistory = newMsgs.map(m => ({
