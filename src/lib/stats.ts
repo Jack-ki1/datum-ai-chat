@@ -1,5 +1,74 @@
 import type { ColumnProfile } from '@/types';
 
+/**
+ * Semantic-aware type detection. Distinguishes storage type (numeric/string)
+ * from semantic role (identifier, ZIP, phone, email, URL, currency, boolean,
+ * categorical, continuous).
+ */
+export type SemanticType =
+  | 'identifier' | 'zip' | 'phone' | 'email' | 'url' | 'currency'
+  | 'boolean' | 'categorical' | 'numeric' | 'datetime' | 'text' | 'empty';
+
+const ZIP_RE = /^\d{5}(-\d{4})?$/;
+const PHONE_RE = /^[\+\(\)\-\.\s\d]{7,}$/;
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const URL_RE = /^(https?:\/\/|www\.)/i;
+const CURRENCY_RE = /^[\$€£¥₹]\s?-?\d/;
+const BOOL_VALUES = new Set(['true', 'false', 'yes', 'no', 'y', 'n', '0', '1', 't', 'f']);
+
+function looksNumeric(v: any): boolean {
+  if (v === '' || v === null || v === undefined || typeof v === 'boolean') return false;
+  const n = Number(v);
+  return !isNaN(n) && isFinite(n);
+}
+
+/** Infer the semantic role of a column. Stops mean/std being computed on ZIP codes. */
+export function detectSemanticType(col: string, values: any[]): SemanticType {
+  const nonNull = values.filter(v => v !== null && v !== undefined && v !== '');
+  if (nonNull.length === 0) return 'empty';
+  const total = nonNull.length;
+  const colLower = col.toLowerCase();
+
+  // Header heuristics first — strong signals
+  const isIdName = /(^id$|_id$|^uuid$|guid|hash|key)/i.test(col);
+  const isZipName = /(^zip$|zipcode|postal|^postcode$)/i.test(col);
+  const isPhoneName = /(phone|mobile|fax|tel)/i.test(col);
+  const isEmailName = /(email|e-mail)/i.test(col);
+  const isUrlName = /(url|link|href|website|domain)/i.test(col);
+  const isCurrencyName = /(price|cost|revenue|amount|salary|wage|fee|charge|usd|eur|gbp)/i.test(col);
+
+  const strs = nonNull.map(String);
+  const uniqueRatio = new Set(strs).size / total;
+
+  // Identifier: high uniqueness + (id-like name OR mostly unique strings)
+  if (isIdName && uniqueRatio > 0.9) return 'identifier';
+  if (uniqueRatio > 0.95 && strs.every(s => s.length >= 6 && s.length <= 64)) return 'identifier';
+
+  // Pattern-based detection on non-null values
+  const matchRatio = (re: RegExp) => strs.filter(s => re.test(s)).length / total;
+  const boolRatio = strs.filter(s => BOOL_VALUES.has(s.toLowerCase())).length / total;
+
+  if (isZipName || matchRatio(ZIP_RE) > 0.8) return 'zip';
+  if (isEmailName || matchRatio(EMAIL_RE) > 0.8) return 'email';
+  if (isUrlName || matchRatio(URL_RE) > 0.8) return 'url';
+  if (matchRatio(CURRENCY_RE) > 0.8 || (isCurrencyName && nonNull.every(looksNumeric))) return 'currency';
+  if (isPhoneName && matchRatio(PHONE_RE) > 0.6) return 'phone';
+  if (boolRatio > 0.95) return 'boolean';
+
+  // Numeric / datetime / categorical / text fallback
+  const numCount = nonNull.filter(looksNumeric).length;
+  if (numCount / total > 0.9) {
+    // Could be a numeric ID column even without an "id" header
+    if (uniqueRatio > 0.95 && strs.every(s => /^\d+$/.test(s))) return 'identifier';
+    return 'numeric';
+  }
+  const dateCount = nonNull.filter(v => !isNaN(Date.parse(String(v))) && String(v).length > 4).length;
+  if (dateCount / total > 0.85) return 'datetime';
+
+  if (uniqueRatio < 0.25 && new Set(strs).size <= 50) return 'categorical';
+  return 'text';
+}
+
 export function detectType(values: any[]): ColumnProfile['type'] {
   const nonNull = values.filter(v => v !== null && v !== undefined && v !== '');
   if (nonNull.length === 0) return 'empty';
@@ -12,17 +81,38 @@ export function detectType(values: any[]): ColumnProfile['type'] {
   return 'text';
 }
 
+/**
+ * Linear-interpolation quantile (R's type-7 / numpy default). Replaces the
+ * old `nums[Math.floor(nums.length * 0.25)]` index hack which was not Q1.
+ */
+export function quantile(sorted: number[], q: number): number {
+  if (!sorted.length) return NaN;
+  if (sorted.length === 1) return sorted[0];
+  const i = (sorted.length - 1) * q;
+  const lo = Math.floor(i);
+  const hi = Math.ceil(i);
+  if (lo === hi) return sorted[lo];
+  return sorted[lo] + (sorted[hi] - sorted[lo]) * (i - lo);
+}
+
 export function buildProfile(data: Record<string, any>[]): ColumnProfile[] {
   if (!data.length) return [];
   const cols = Object.keys(data[0]);
   return cols.map(col => {
     const values = data.map(r => r[col]);
-    const type = detectType(values);
+    const semantic = detectSemanticType(col, values);
+    // Map semantic → ColumnProfile['type'] (legacy bucket)
+    const type: ColumnProfile['type'] =
+      semantic === 'numeric' || semantic === 'currency' ? 'numeric'
+      : semantic === 'datetime' ? 'datetime'
+      : semantic === 'categorical' || semantic === 'boolean' ? 'categorical'
+      : semantic === 'empty' ? 'empty'
+      : 'text'; // identifier/zip/phone/email/url/text → text (no numeric stats)
     const total = values.length;
     const nullCount = values.filter(v => v === null || v === undefined || v === '').length;
     const nonNull = values.filter(v => v !== null && v !== undefined && v !== '');
     const uniqueCount = new Set(nonNull.map(String)).size;
-    const p: ColumnProfile = { col, type, nullCount, uniqueCount, total };
+    const p: ColumnProfile = { col, type, nullCount, uniqueCount, total, semantic } as ColumnProfile;
 
     if (type === 'numeric') {
       const nums = nonNull.map(Number).filter(n => !isNaN(n)).sort((a, b) => a - b);
@@ -30,10 +120,13 @@ export function buildProfile(data: Record<string, any>[]): ColumnProfile[] {
         p.min = nums[0];
         p.max = nums[nums.length - 1];
         p.mean = nums.reduce((a, b) => a + b, 0) / nums.length;
-        p.median = nums[Math.floor(nums.length / 2)];
-        p.std = Math.sqrt(nums.reduce((s, v) => s + (v - p.mean!) ** 2, 0) / nums.length);
-        p.q1 = nums[Math.floor(nums.length * 0.25)];
-        p.q3 = nums[Math.floor(nums.length * 0.75)];
+        p.median = quantile(nums, 0.5);
+        // sample std (n-1) — matches scipy/pandas default
+        p.std = nums.length > 1
+          ? Math.sqrt(nums.reduce((s, v) => s + (v - p.mean!) ** 2, 0) / (nums.length - 1))
+          : 0;
+        p.q1 = quantile(nums, 0.25);
+        p.q3 = quantile(nums, 0.75);
         const iqr = (p.q3 || 0) - (p.q1 || 0);
         const lo = (p.q1 || 0) - 1.5 * iqr;
         const hi = (p.q3 || 0) + 1.5 * iqr;
@@ -135,17 +228,36 @@ export function temporalRange(data: Record<string, any>[], col: string): { min: 
   return { min, max, granularity };
 }
 
-export function pearsonCorr(data: Record<string, any>[], colA: string, colB: string): number {
+/**
+ * Returns {r, n, warning?}. Previously this returned 0 silently for n<3,
+ * hiding genuine correlations. Now it returns the value and a warning string.
+ */
+export function pearsonCorrDetailed(
+  data: Record<string, any>[], colA: string, colB: string
+): { r: number; n: number; warning?: string } {
   const pairs = data
     .map(r => [Number(r[colA]), Number(r[colB])])
     .filter(([a, b]) => !isNaN(a) && !isNaN(b));
-  if (pairs.length < 3) return 0;
   const n = pairs.length;
+  if (n < 3) {
+    return { r: NaN, n, warning: `Insufficient pairs (n=${n}, need ≥3) — correlation undefined` };
+  }
   const sumA = pairs.reduce((s, [a]) => s + a, 0);
   const sumB = pairs.reduce((s, [, b]) => s + b, 0);
   const sumAB = pairs.reduce((s, [a, b]) => s + a * b, 0);
   const sumA2 = pairs.reduce((s, [a]) => s + a * a, 0);
   const sumB2 = pairs.reduce((s, [, b]) => s + b * b, 0);
   const denom = Math.sqrt((n * sumA2 - sumA ** 2) * (n * sumB2 - sumB ** 2));
-  return denom === 0 ? 0 : Math.round(((n * sumAB - sumA * sumB) / denom) * 1000) / 1000;
+  if (denom === 0) {
+    return { r: 0, n, warning: 'Zero variance in one column — correlation undefined' };
+  }
+  const r = Math.round(((n * sumAB - sumA * sumB) / denom) * 1000) / 1000;
+  const warning = n < 10 ? `Small sample (n=${n}) — interpret with caution` : undefined;
+  return { r, n, warning };
+}
+
+/** Backward-compat wrapper. Returns r, or 0 only as a last resort. */
+export function pearsonCorr(data: Record<string, any>[], colA: string, colB: string): number {
+  const { r } = pearsonCorrDetailed(data, colA, colB);
+  return isNaN(r) ? 0 : r;
 }
