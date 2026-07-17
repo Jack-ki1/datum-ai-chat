@@ -1,6 +1,6 @@
 import { defineTool } from "@lovable.dev/mcp-js";
 import { z } from "zod";
-import { promptSectors } from "@/lib/sample-prompts";
+import { promptSectors } from "../../sample-prompts";
 
 export default defineTool({
   name: "get_sample_prompts",

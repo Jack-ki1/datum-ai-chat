@@ -1,5 +1,5 @@
 import { defineTool } from "@lovable.dev/mcp-js";
-import { salesData, hrData, stockData } from "@/lib/sample-datasets";
+import { salesData, hrData, stockData } from "../../sample-datasets";
 
 export default defineTool({
   name: "list_sample_datasets",

@@ -1,6 +1,6 @@
 import { defineTool } from "@lovable.dev/mcp-js";
 import { z } from "zod";
-import { salesData, hrData, stockData } from "@/lib/sample-datasets";
+import { salesData, hrData, stockData } from "../../sample-datasets";
 
 const MAP: Record<string, { name: string; data: Record<string, unknown>[] }> = {
   sales: { name: "Sales Data", data: salesData },

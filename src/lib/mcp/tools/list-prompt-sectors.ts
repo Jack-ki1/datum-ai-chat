@@ -1,5 +1,5 @@
 import { defineTool } from "@lovable.dev/mcp-js";
-import { promptSectors } from "@/lib/sample-prompts";
+import { promptSectors } from "../../sample-prompts";
 
 export default defineTool({
   name: "list_prompt_sectors",
