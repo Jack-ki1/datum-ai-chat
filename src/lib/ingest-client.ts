@@ -27,18 +27,12 @@ export async function ingestDataset(
 
 /** Download dataset rows from Storage by hash (for viewers). */
 export async function loadDatasetRows(file_hash: string): Promise<any[]> {
-  const { data: meta, error: metaErr } = await supabase
-    .from("datasets")
-    .select("storage_path")
-    .eq("file_hash", file_hash)
-    .maybeSingle();
-  if (metaErr || !meta) throw new Error("Dataset not in registry");
-  const { data: blob, error } = await supabase.storage
-    .from("datasets")
-    .download(meta.storage_path);
-  if (error || !blob) throw new Error("Failed to download dataset");
-  const text = await blob.text();
-  return JSON.parse(text);
+  const { data, error } = await supabase.functions.invoke("dataset-fetch", {
+    body: { file_hash },
+  });
+  if (error) throw new Error(error.message || "Failed to download dataset");
+  if ((data as any)?.error) throw new Error((data as any).error);
+  return data as any[];
 }
 
 /** Run a compute tool directly (for the Pyodide alternative path). */
