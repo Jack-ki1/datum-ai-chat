@@ -1,5 +1,5 @@
 import { useState, useRef, useCallback } from 'react';
-import { Upload, FileSpreadsheet } from 'lucide-react';
+import { Upload, FileSpreadsheet, Sparkles } from 'lucide-react';
 import { parseFile } from '@/lib/parsers';
 import { useDatumStore } from '@/store/datum.store';
 
@@ -47,32 +47,44 @@ export function DataUpload() {
         onDragLeave={() => setDragOver(false)}
         onDrop={onDrop}
         onClick={() => fileRef.current?.click()}
-        className={`w-full max-w-lg border-2 border-dashed rounded-2xl p-12 text-center cursor-pointer transition-all duration-200
-          ${dragOver ? 'border-primary bg-primary/5 scale-[1.01]' : 'border-border hover:border-primary/40 hover:bg-muted/50'}`}
+        className={`relative w-full max-w-lg border-2 border-dashed rounded-2xl p-12 text-center cursor-pointer overflow-hidden transition-all duration-300
+          ${dragOver ? 'border-primary scale-[1.01] shadow-lg shadow-primary/10' : 'border-border hover:border-primary/40'}`}
       >
+        {/* soft brand wash */}
+        <div
+          aria-hidden
+          className={`pointer-events-none absolute inset-0 bg-brand-gradient-soft transition-opacity duration-300 ${dragOver || loading ? 'opacity-100' : 'opacity-40'}`}
+        />
         <div className="flex flex-col items-center gap-4">
-          <div className={`w-14 h-14 rounded-2xl flex items-center justify-center transition-colors ${dragOver ? 'bg-primary/15' : 'bg-muted'}`}>
-            {loading ? (
-              <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-            ) : (
-              <Upload className={`w-6 h-6 ${dragOver ? 'text-primary' : 'text-muted-foreground'}`} />
+          <div className="relative">
+            {(dragOver || loading) && (
+              <span aria-hidden className="absolute inset-0 rounded-2xl bg-brand-gradient animate-pulse-ring" />
             )}
+            <div className={`relative w-14 h-14 rounded-2xl flex items-center justify-center transition-all duration-300 ring-1 ${dragOver || loading ? 'bg-brand-gradient text-primary-foreground ring-primary/30 shadow-md' : 'bg-card ring-border'}`}>
+              {loading ? (
+                <div className="w-6 h-6 border-2 border-primary-foreground border-t-transparent rounded-full animate-spin" />
+              ) : dragOver ? (
+                <Sparkles className="w-6 h-6 text-primary-foreground" strokeWidth={2.2} />
+              ) : (
+                <Upload className="w-6 h-6 text-muted-foreground" />
+              )}
+            </div>
           </div>
-          <div>
-            <p className="text-sm font-medium text-foreground">
+          <div className="relative">
+            <p className="text-sm font-semibold text-foreground">
               {loading
                 ? stage === 'parsing' ? `Parsing… ${progress}%` : 'Profiling on server…'
-                : 'Drop your dataset here'}
+                : dragOver ? 'Release to analyze' : 'Drop your dataset here'}
             </p>
             <p className="text-xs text-muted-foreground mt-1">CSV, TSV, XLSX, or JSON — up to 500MB</p>
             {loading && (
-              <div className="w-full h-1.5 bg-muted rounded-full overflow-hidden mt-3">
-                <div className="h-full bg-primary transition-all duration-150"
+              <div className="w-full h-1.5 bg-muted/70 rounded-full overflow-hidden mt-3">
+                <div className="h-full bg-brand-gradient animate-gradient transition-all duration-150"
                   style={{ width: `${stage === 'profiling' ? 100 : progress}%` }} />
               </div>
             )}
           </div>
-          <div className="flex items-center gap-2 mt-2">
+          <div className="relative flex items-center gap-2 mt-2">
             <FileSpreadsheet className="w-3.5 h-3.5 text-muted-foreground" />
             <span className="text-[11px] text-muted-foreground">or click to browse</span>
           </div>

@@ -26,9 +26,15 @@ export function WelcomeScreen({ onPrompt }: { onPrompt: (text: string) => void }
   return (
     <div className="flex flex-col items-center justify-center h-full px-6 py-12">
       {/* Hero */}
-      <img src={fineseLogo} alt="FINESE AI" className="w-14 h-14 rounded-2xl object-cover shadow-md mb-5" />
-      <h1 className="font-display font-extrabold text-4xl text-foreground mb-2 tracking-tight">
-        What can I help with?
+      <div className="relative mb-5">
+        <span aria-hidden className="absolute inset-0 rounded-2xl bg-brand-gradient blur-xl opacity-40" />
+        <div className="relative w-14 h-14 rounded-2xl bg-brand-gradient animate-gradient p-[2px] shadow-lg shadow-primary/20">
+          <img src={fineseLogo} alt="FINESE AI" className="w-full h-full rounded-[14px] object-cover" />
+        </div>
+      </div>
+      <h1 className="font-display font-extrabold text-4xl mb-2 tracking-tight">
+        <span className="text-foreground">What can I help </span>
+        <span className="text-brand-gradient">with?</span>
       </h1>
       <p className="text-muted-foreground text-[15px] text-center max-w-md mb-10 leading-relaxed">
         Upload data for analysis, or ask anything — debugging, system design, experiments, research synthesis.
