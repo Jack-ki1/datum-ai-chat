@@ -1,22 +1,25 @@
-import { Hexagon } from 'lucide-react';
 import { useDatumStore } from '@/store/datum.store';
+import fineseLogo from '@/assets/finese-logo.jpg';
 
 export function TypingIndicator() {
   const { isLoaded } = useDatumStore();
 
   return (
     <div className="flex items-start gap-3.5 px-6 py-4 animate-fade-slide">
-      <div className="w-8 h-8 rounded-xl bg-primary text-primary-foreground flex items-center justify-center shrink-0 shadow-sm">
-        <Hexagon className="w-4 h-4" strokeWidth={2.5} />
+      <div className="relative w-8 h-8 shrink-0">
+        <span className="absolute inset-0 rounded-xl bg-brand-gradient animate-pulse-ring" aria-hidden />
+        <div className="relative w-8 h-8 rounded-xl bg-brand-gradient animate-gradient flex items-center justify-center shadow-sm ring-1 ring-primary/20">
+          <img src={fineseLogo} alt="" className="w-5 h-5 rounded-md object-cover opacity-95" />
+        </div>
       </div>
       <div className="flex flex-col gap-1.5 pt-1.5">
-        <span className="text-xs text-muted-foreground font-medium">
+        <span className="text-xs font-medium text-brand-gradient">
           {isLoaded ? 'Analyzing your data…' : 'Thinking…'}
         </span>
         <div className="flex items-center gap-1.5">
-          <span className="w-[6px] h-[6px] rounded-full bg-primary/60 animate-dot-1" />
-          <span className="w-[6px] h-[6px] rounded-full bg-primary/60 animate-dot-2" />
-          <span className="w-[6px] h-[6px] rounded-full bg-primary/60 animate-dot-3" />
+          <span className="w-[6px] h-[6px] rounded-full bg-primary animate-dot-1" />
+          <span className="w-[6px] h-[6px] rounded-full bg-datum-cyan animate-dot-2" />
+          <span className="w-[6px] h-[6px] rounded-full bg-datum-pink animate-dot-3" />
         </div>
       </div>
     </div>
