@@ -205,6 +205,25 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
+    // Require authenticated user
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader?.startsWith("Bearer ")) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    const anon = createClient(
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SUPABASE_ANON_KEY")!,
+    );
+    const { data: userData, error: userErr } = await anon.auth.getUser(authHeader.slice(7));
+    if (userErr || !userData?.user) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    const user_id = userData.user.id;
+
     const payload: IngestPayload = await req.json();
     if (!payload?.rows?.length) {
       return new Response(JSON.stringify({ error: "rows is required" }), {
@@ -224,24 +243,30 @@ Deno.serve(async (req) => {
       auth: { persistSession: false },
     });
 
-    // Cache hit?
-    const { data: existing } = await supa
-      .from("dataset_profiles")
-      .select("*, datasets!inner(*)")
+    // Cache hit? Scoped to this user (file_hash is unique per user).
+    const { data: ownedDataset } = await supa
+      .from("datasets")
+      .select("*")
       .eq("file_hash", file_hash)
+      .eq("user_id", user_id)
       .maybeSingle();
+    const { data: existingProfile } = ownedDataset ? await supa
+      .from("dataset_profiles")
+      .select("*")
+      .eq("file_hash", file_hash)
+      .maybeSingle() : { data: null } as any;
 
-    if (existing) {
+    if (ownedDataset && existingProfile) {
       return new Response(
         JSON.stringify({
           file_hash,
-          file_name: (existing as any).datasets.file_name,
-          row_count: (existing as any).datasets.row_count,
-          col_count: (existing as any).datasets.col_count,
-          profile: existing.profile,
-          correlations: existing.correlations,
-          advanced: existing.advanced,
-          health_score: existing.health_score,
+          file_name: ownedDataset.file_name,
+          row_count: ownedDataset.row_count,
+          col_count: ownedDataset.col_count,
+          profile: existingProfile.profile,
+          correlations: existingProfile.correlations,
+          advanced: existingProfile.advanced,
+          health_score: existingProfile.health_score,
           cached: true,
         }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -256,8 +281,8 @@ Deno.serve(async (req) => {
     const health_score =
       totalCells > 0 ? Math.round((1 - nullCells / totalCells) * 100) : 100;
 
-    // Store raw file in Storage
-    const storage_path = `${file_hash}.json`;
+    // Store raw file in Storage — namespaced by user for privacy
+    const storage_path = `${user_id}/${file_hash}.json`;
     const blob = new Blob([rowsJson], { type: "application/json" });
     await supa.storage.from("datasets").upload(storage_path, blob, { upsert: true });
 
@@ -265,6 +290,7 @@ Deno.serve(async (req) => {
     await supa.from("datasets").upsert(
       {
         file_hash,
+        user_id,
         file_name: fileName,
         storage_path,
         file_ext: fileExt,
@@ -272,7 +298,7 @@ Deno.serve(async (req) => {
         col_count: profile.length,
         size_bytes: rowsJson.length,
       },
-      { onConflict: "file_hash" }
+      { onConflict: "file_hash,user_id" }
     );
 
     await supa.from("dataset_profiles").upsert(
