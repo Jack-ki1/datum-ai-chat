@@ -17,13 +17,27 @@ function supa() {
   );
 }
 
-async function loadDataset(file_hash: string): Promise<any[]> {
+async function requireUser(req: Request): Promise<string> {
+  const auth = req.headers.get("Authorization");
+  if (!auth?.startsWith("Bearer ")) throw new Response("Unauthorized", { status: 401 });
+  const token = auth.slice(7);
+  const anon = createClient(
+    Deno.env.get("SUPABASE_URL")!,
+    Deno.env.get("SUPABASE_ANON_KEY")!,
+  );
+  const { data, error } = await anon.auth.getUser(token);
+  if (error || !data?.user) throw new Response("Unauthorized", { status: 401 });
+  return data.user.id;
+}
+
+async function loadDataset(file_hash: string, user_id: string): Promise<any[]> {
   const { data: meta } = await supa()
     .from("datasets")
-    .select("storage_path")
+    .select("storage_path, user_id")
     .eq("file_hash", file_hash)
+    .eq("user_id", user_id)
     .maybeSingle();
-  if (!meta) throw new Error("Dataset not found: " + file_hash);
+  if (!meta) throw new Response(JSON.stringify({ error: "Dataset not found or access denied" }), { status: 403 });
   const { data: blob, error } = await supa().storage
     .from("datasets")
     .download(meta.storage_path);
