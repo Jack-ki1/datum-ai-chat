@@ -129,12 +129,12 @@ const TOOL_DEFS = [
   },
 ];
 
-async function runTool(name: string, args: any, file_hash: string) {
+async function runTool(name: string, args: any, file_hash: string, userJwt: string) {
   const resp = await fetch(`${FUNCTIONS_BASE}/compute-tools`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      Authorization: `Bearer ${Deno.env.get("SUPABASE_ANON_KEY")}`,
+      Authorization: `Bearer ${userJwt}`,
     },
     body: JSON.stringify({ tool: name, args, file_hash }),
   });
@@ -148,9 +148,46 @@ serve(async (req) => {
   }
 
   try {
+    // Require authenticated user
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader?.startsWith("Bearer ")) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    const userJwt = authHeader.slice(7);
+    const { createClient } = await import("https://esm.sh/@supabase/supabase-js@2.50.0");
+    const anon = createClient(
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SUPABASE_ANON_KEY")!,
+    );
+    const { data: userData, error: userErr } = await anon.auth.getUser(userJwt);
+    if (userErr || !userData?.user) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    const user_id = userData.user.id;
+
     const { messages, dataset_context, file_hash } = await req.json();
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
+
+    // If a file_hash is provided, verify the user actually owns it.
+    if (file_hash) {
+      const svc = createClient(
+        Deno.env.get("SUPABASE_URL")!,
+        Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
+        { auth: { persistSession: false } },
+      );
+      const { data: owned } = await svc.from("datasets")
+        .select("file_hash").eq("file_hash", file_hash).eq("user_id", user_id).maybeSingle();
+      if (!owned) {
+        return new Response(JSON.stringify({ error: "Dataset access denied" }), {
+          status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+    }
 
     const systemPrompt = buildSystemPrompt(dataset_context);
     const enableTools = !!file_hash;
@@ -201,7 +238,7 @@ serve(async (req) => {
         for (const call of calls) {
           let args: any = {};
           try { args = JSON.parse(call.function.arguments || "{}"); } catch {}
-          const result = await runTool(call.function.name, args, file_hash);
+          const result = await runTool(call.function.name, args, file_hash, userJwt);
           convo.push({
             role: "tool",
             tool_call_id: call.id,
