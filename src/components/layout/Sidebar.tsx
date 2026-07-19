@@ -1,11 +1,13 @@
 import { useDatumStore } from '@/store/datum.store';
 import { useNavigate } from 'react-router-dom';
-import { MessageSquare, Database, Plus, Search, BookOpen } from 'lucide-react';
+import { MessageSquare, Database, Plus, Search, BookOpen, LogOut } from 'lucide-react';
 import fineseLogo from '@/assets/finese-logo.jpg';
+import { useAuth } from '@/hooks/useAuth';
 
 export function Sidebar() {
   const { sessions, activeSessionId, setActiveSession, newSession, fileName, isLoaded, dataset, profile, sidebarOpen } = useDatumStore();
   const navigate = useNavigate();
+  const { user, signOut } = useAuth();
 
   if (!sidebarOpen) return null;
 
@@ -80,6 +82,26 @@ export function Sidebar() {
                 {dataset?.length} rows · {profile?.length} cols
               </span>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* User + sign out */}
+      {user && (
+        <div className="p-3 border-t border-border">
+          <div className="flex items-center gap-2 px-2 py-2 rounded-xl hover:bg-muted transition-colors">
+            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary to-datum-cyan flex items-center justify-center text-primary-foreground text-xs font-semibold shrink-0">
+              {(user.email || '?').slice(0, 1).toUpperCase()}
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="text-[12px] font-medium text-foreground truncate">{user.email}</p>
+              <p className="text-[10px] text-muted-foreground">Signed in</p>
+            </div>
+            <button onClick={signOut}
+              title="Sign out"
+              className="p-1.5 rounded-lg text-muted-foreground hover:text-datum-red hover:bg-datum-red/10 transition-colors">
+              <LogOut className="w-4 h-4" />
+            </button>
           </div>
         </div>
       )}

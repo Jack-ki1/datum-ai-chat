@@ -48,15 +48,7 @@ export type Database = {
           status?: string
           updated_at?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "compute_jobs_file_hash_fkey"
-            columns: ["file_hash"]
-            isOneToOne: false
-            referencedRelation: "datasets"
-            referencedColumns: ["file_hash"]
-          },
-        ]
+        Relationships: []
       }
       dataset_profiles: {
         Row: {
@@ -86,15 +78,7 @@ export type Database = {
           id?: string
           profile?: Json
         }
-        Relationships: [
-          {
-            foreignKeyName: "dataset_profiles_file_hash_fkey"
-            columns: ["file_hash"]
-            isOneToOne: true
-            referencedRelation: "datasets"
-            referencedColumns: ["file_hash"]
-          },
-        ]
+        Relationships: []
       }
       datasets: {
         Row: {
@@ -107,6 +91,7 @@ export type Database = {
           row_count: number | null
           size_bytes: number | null
           storage_path: string
+          user_id: string
         }
         Insert: {
           col_count?: number | null
@@ -118,6 +103,7 @@ export type Database = {
           row_count?: number | null
           size_bytes?: number | null
           storage_path: string
+          user_id?: string
         }
         Update: {
           col_count?: number | null
@@ -129,6 +115,7 @@ export type Database = {
           row_count?: number | null
           size_bytes?: number | null
           storage_path?: string
+          user_id?: string
         }
         Relationships: []
       }

@@ -12,6 +12,24 @@ const corsHeaders = {
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
   try {
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader?.startsWith("Bearer ")) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    const anon = createClient(
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SUPABASE_ANON_KEY")!,
+    );
+    const { data: userData, error: userErr } = await anon.auth.getUser(authHeader.slice(7));
+    if (userErr || !userData?.user) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    const user_id = userData.user.id;
+
     const { file_hash } = await req.json();
     if (!file_hash || typeof file_hash !== "string") {
       return new Response(JSON.stringify({ error: "file_hash required" }), {
@@ -28,10 +46,11 @@ Deno.serve(async (req) => {
       .from("datasets")
       .select("storage_path")
       .eq("file_hash", file_hash)
+      .eq("user_id", user_id)
       .maybeSingle();
     if (metaErr || !meta) {
-      return new Response(JSON.stringify({ error: "Dataset not found" }), {
-        status: 404,
+      return new Response(JSON.stringify({ error: "Dataset not found or access denied" }), {
+        status: 403,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
