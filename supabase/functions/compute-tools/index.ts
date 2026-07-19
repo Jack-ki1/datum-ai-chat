@@ -395,6 +395,7 @@ const TOOLS: Record<string, (args: any, data: any[]) => any> = {
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
   try {
+    const user_id = await requireUser(req);
     const { tool, args, file_hash } = await req.json();
     if (!tool || !TOOLS[tool]) {
       return new Response(JSON.stringify({ error: "Unknown tool: " + tool }), {
@@ -406,12 +407,19 @@ Deno.serve(async (req) => {
         status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
-    const data = await loadDataset(file_hash);
+    const data = await loadDataset(file_hash, user_id);
     const result = TOOLS[tool](args || {}, data);
     return new Response(JSON.stringify({ tool, result }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (e) {
+    if (e instanceof Response) {
+      const body = await e.text().catch(() => "");
+      return new Response(body || JSON.stringify({ error: "Unauthorized" }), {
+        status: e.status,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
     console.error("compute-tools error:", e);
     return new Response(JSON.stringify({ error: e instanceof Error ? e.message : "Unknown" }), {
       status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
