@@ -103,7 +103,7 @@ export type Database = {
           row_count?: number | null
           size_bytes?: number | null
           storage_path: string
-          user_id: string
+          user_id?: string
         }
         Update: {
           col_count?: number | null
