@@ -38,6 +38,7 @@ interface DatumStore {
   /** Live ingest progress (0-100) — UI-only */
   ingestProgress: number;
   ingestStage: 'idle' | 'parsing' | 'profiling';
+  ingestAbort: AbortController | null;
 
   // Connection / async state
   connectionStatus: 'idle' | 'connecting' | 'streaming' | 'error';
