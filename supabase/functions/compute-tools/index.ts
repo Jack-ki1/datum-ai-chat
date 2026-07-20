@@ -411,7 +411,7 @@ const TOOLS: Record<string, (args: any, data: any[]) => any> = {
       const shuffledCol = shuffle(colVals, rng);
       let permCorrect = 0;
       perm.forEach((r, k) => {
-        const xs = [...r.x]; xs[f] = shuffled[k];
+        const xs = [...r.x]; xs[f] = shuffledCol[k];
         if (predict(xs) === String(r.y)) permCorrect++;
       });
       const permAcc = perm.length ? permCorrect / perm.length : 0;
