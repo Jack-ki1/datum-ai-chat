@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import type { ChatMessage, ColumnProfile, Session, Artifact, ChangelogEntry } from '@/types';
 import { ingestDataset, loadDatasetRows } from '@/lib/ingest-client';
+import { MAX_FILE_BYTES } from '@/lib/constants';
 import { streamChat } from '@/lib/streaming';
 import { parseArtifacts } from '@/lib/artifact-parser';
 
@@ -9,7 +10,7 @@ function uid() { return crypto.randomUUID(); }
 function now() { return new Date().toISOString(); }
 
 const MAX_PERSISTED_SESSIONS = 25; // LRU cap
-const MAX_FILE_BYTES = 500 * 1024 * 1024; // 500MB
+export { MAX_FILE_BYTES };
 
 export interface ExtraDataset {
   fileHash: string;
@@ -37,6 +38,7 @@ interface DatumStore {
   /** Live ingest progress (0-100) — UI-only */
   ingestProgress: number;
   ingestStage: 'idle' | 'parsing' | 'profiling';
+  ingestAbort: AbortController | null;
 
   // Connection / async state
   connectionStatus: 'idle' | 'connecting' | 'streaming' | 'error';
@@ -54,6 +56,7 @@ interface DatumStore {
   // Actions
   ingest: (data: Record<string, any>[], name: string) => Promise<void>;
   setIngestProgress: (pct: number, stage?: 'parsing' | 'profiling') => void;
+  cancelIngest: () => void;
   switchActiveDataset: (fileHash: string) => Promise<void>;
   removeExtraDataset: (fileHash: string) => void;
   hydrateActiveDataset: () => Promise<void>;
@@ -111,6 +114,7 @@ export const useDatumStore = create<DatumStore>()(
         extraDatasets: [],
         ingestProgress: 0,
         ingestStage: 'idle' as const,
+        ingestAbort: null as AbortController | null,
         connectionStatus: 'idle' as const,
         abortController: null,
         sessions: [{ id: initialSessionId, title: 'New Session', createdAt: now(), messages: [] }],
@@ -119,9 +123,14 @@ export const useDatumStore = create<DatumStore>()(
         changelog: [], changelogOpen: false,
 
         ingest: async (data, name) => {
-          set({ isIngesting: true, ingestError: null, ingestStage: 'profiling', ingestProgress: 50 });
+          const ac = new AbortController();
+          set({ isIngesting: true, ingestError: null, ingestStage: 'profiling', ingestProgress: 0, ingestAbort: ac });
           try {
-            const res = await ingestDataset(data, name);
+            const res = await ingestDataset(data, name, {
+              signal: ac.signal,
+              onUploadProgress: (pct) => set({ ingestProgress: pct, ingestStage: 'profiling' }),
+              onUploaded: () => set({ ingestProgress: 100, ingestStage: 'profiling' }),
+            });
             const welcome = generateWelcome(res.row_count, res.profile, res.file_name, res.health_score);
             const { activeSessionId, sessions, extraDatasets, isLoaded } = get();
             const msgs = [welcome];
@@ -149,6 +158,7 @@ export const useDatumStore = create<DatumStore>()(
               isIngesting: false,
               ingestProgress: 100,
               ingestStage: 'idle',
+              ingestAbort: null,
               extraDatasets: nextExtras,
               messages: msgs,
               changelog: [...get().changelog, entry],
@@ -165,7 +175,7 @@ export const useDatumStore = create<DatumStore>()(
                 : s),
             });
           } catch (e) {
-            set({ isIngesting: false, ingestStage: 'idle', ingestProgress: 0, ingestError: e instanceof Error ? e.message : 'Ingest failed' });
+            set({ isIngesting: false, ingestStage: 'idle', ingestProgress: 0, ingestAbort: null, ingestError: e instanceof Error ? e.message : 'Ingest failed' });
             throw e;
           }
         },
@@ -174,6 +184,12 @@ export const useDatumStore = create<DatumStore>()(
           ingestProgress: pct,
           ...(stage ? { ingestStage: stage, isIngesting: true } : {}),
         }),
+
+        cancelIngest: () => {
+          const ac = (get() as any).ingestAbort as AbortController | null;
+          if (ac) ac.abort();
+          set({ isIngesting: false, ingestStage: 'idle', ingestProgress: 0, ingestAbort: null });
+        },
 
         switchActiveDataset: async (fileHash) => {
           const extra = get().extraDatasets.find(d => d.fileHash === fileHash);

@@ -17,6 +17,10 @@ interface IngestPayload {
   rows: Record<string, any>[];
 }
 
+// Keep these in sync with src/lib/constants.ts on the client.
+const MAX_PAYLOAD_BYTES = 25 * 1024 * 1024; // 25MB JSON body ceiling
+const MAX_ROWS = 250_000;
+
 async function sha256(text: string): Promise<string> {
   const buf = new TextEncoder().encode(text);
   const hash = await crypto.subtle.digest("SHA-256", buf);
@@ -231,10 +235,20 @@ Deno.serve(async (req) => {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+    if (payload.rows.length > MAX_ROWS) {
+      return new Response(JSON.stringify({ error: `Too many rows (${payload.rows.length}). Max is ${MAX_ROWS}.` }), {
+        status: 413, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
 
     const fileName = payload.file_name || "dataset";
     const fileExt = (payload.file_ext || "csv").toLowerCase();
     const rowsJson = JSON.stringify(payload.rows);
+    if (rowsJson.length > MAX_PAYLOAD_BYTES) {
+      return new Response(JSON.stringify({ error: `Payload too large (${(rowsJson.length / 1024 / 1024).toFixed(1)}MB). Max is ${Math.round(MAX_PAYLOAD_BYTES / 1024 / 1024)}MB.` }), {
+        status: 413, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
     const file_hash = await sha256(rowsJson);
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
@@ -329,7 +343,7 @@ Deno.serve(async (req) => {
   } catch (e) {
     console.error("dataset-ingest error:", e);
     return new Response(
-      JSON.stringify({ error: e instanceof Error ? e.message : "Unknown error" }),
+      JSON.stringify({ error: "Failed to ingest dataset. Please try again." }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }

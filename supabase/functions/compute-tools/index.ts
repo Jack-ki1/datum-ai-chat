@@ -83,7 +83,57 @@ function pearsonR(xs: number[], ys: number[]): number {
   const d = Math.sqrt(dx * dy);
   return d === 0 ? 0 : num / d;
 }
-// Welch's t-test (returns t, df, two-sided p-value approx)
+// Regularized incomplete beta function I_x(a, b) via Lentz's continued fraction.
+// Used for an accurate Student's t two-sided p-value at any df.
+function logGamma(z: number): number {
+  const g = 7;
+  const c = [
+    0.99999999999980993, 676.5203681218851, -1259.1392167224028,
+    771.32342877765313, -176.61502916214059, 12.507343278686905,
+    -0.13857109526572012, 9.9843695780195716e-6, 1.5056327351493116e-7,
+  ];
+  if (z < 0.5) return Math.log(Math.PI / Math.sin(Math.PI * z)) - logGamma(1 - z);
+  z -= 1;
+  let x = c[0];
+  for (let i = 1; i < g + 2; i++) x += c[i] / (z + i);
+  const t = z + g + 0.5;
+  return 0.5 * Math.log(2 * Math.PI) + (z + 0.5) * Math.log(t) - t + Math.log(x);
+}
+function betacf(x: number, a: number, b: number): number {
+  const MAXIT = 200, EPS = 3e-7, FPMIN = 1e-30;
+  const qab = a + b, qap = a + 1, qam = a - 1;
+  let c = 1, d = 1 - (qab * x) / qap;
+  if (Math.abs(d) < FPMIN) d = FPMIN;
+  d = 1 / d;
+  let h = d;
+  for (let m = 1; m <= MAXIT; m++) {
+    const m2 = 2 * m;
+    let aa = (m * (b - m) * x) / ((qam + m2) * (a + m2));
+    d = 1 + aa * d; if (Math.abs(d) < FPMIN) d = FPMIN;
+    c = 1 + aa / c; if (Math.abs(c) < FPMIN) c = FPMIN;
+    d = 1 / d; h *= d * c;
+    aa = (-(a + m) * (qab + m) * x) / ((a + m2) * (qap + m2));
+    d = 1 + aa * d; if (Math.abs(d) < FPMIN) d = FPMIN;
+    c = 1 + aa / c; if (Math.abs(c) < FPMIN) c = FPMIN;
+    d = 1 / d; const del = d * c; h *= del;
+    if (Math.abs(del - 1) < EPS) break;
+  }
+  return h;
+}
+function ibeta(x: number, a: number, b: number): number {
+  if (x <= 0) return 0;
+  if (x >= 1) return 1;
+  const bt = Math.exp(logGamma(a + b) - logGamma(a) - logGamma(b) + a * Math.log(x) + b * Math.log(1 - x));
+  if (x < (a + 1) / (a + b + 2)) return (bt * betacf(x, a, b)) / a;
+  return 1 - (bt * betacf(1 - x, b, a)) / b;
+}
+// Two-sided Student's t p-value.
+function tPValue(t: number, df: number): number {
+  if (!isFinite(t) || !isFinite(df) || df <= 0) return NaN;
+  const x = df / (df + t * t);
+  return ibeta(x, df / 2, 0.5);
+}
+// Welch's t-test (returns t, df, two-sided p-value)
 function welchT(a: number[], b: number[]) {
   const ma = mean(a), mb = mean(b);
   const va = variance(a), vb = variance(b);
@@ -91,20 +141,17 @@ function welchT(a: number[], b: number[]) {
   if (na < 2 || nb < 2) return null;
   const t = (ma - mb) / Math.sqrt(va / na + vb / nb);
   const df = (va / na + vb / nb) ** 2 / ((va / na) ** 2 / (na - 1) + (vb / nb) ** 2 / (nb - 1));
-  // Approx p-value via normal approximation for large df, else rough
-  const z = Math.abs(t);
-  const p = 2 * (1 - 0.5 * (1 + erf(z / Math.SQRT2)));
+  const p = tPValue(t, df);
   return { t, df, p_value: p, mean_a: ma, mean_b: mb, n_a: na, n_b: nb };
 }
-function erf(x: number): number {
-  // Abramowitz & Stegun approximation
-  const sign = x < 0 ? -1 : 1;
-  x = Math.abs(x);
-  const a1 = 0.254829592, a2 = -0.284496736, a3 = 1.421413741;
-  const a4 = -1.453152027, a5 = 1.061405429, p = 0.3275911;
-  const t = 1 / (1 + p * x);
-  const y = 1 - (((((a5 * t + a4) * t) + a3) * t + a2) * t + a1) * t * Math.exp(-x * x);
-  return sign * y;
+// Uniform Fisher-Yates shuffle with an injected RNG.
+function shuffle<T>(arr: T[], rand: () => number): T[] {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(rand() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
 }
 
 // ── tool implementations ───────────────────────────────────────────
@@ -282,10 +329,10 @@ const TOOLS: Record<string, (args: any, data: any[]) => any> = {
         return `b${b}`;
       });
 
-    // Deterministic shuffle (seeded LCG)
+    // Deterministic Fisher-Yates shuffle (seeded LCG)
     let seed = 42;
     const rand = () => { seed = (seed * 9301 + 49297) % 233280; return seed / 233280; };
-    const shuffled = [...rows].sort(() => rand() - 0.5);
+    const shuffled = shuffle(rows, rand);
     const split = Math.floor(shuffled.length * 0.7);
     const train = shuffled.slice(0, split);
     const test = shuffled.slice(split);
@@ -357,16 +404,14 @@ const TOOLS: Record<string, (args: any, data: any[]) => any> = {
     const baseAcc = accuracy;
     const importance: { name: string; importance: number }[] = [];
     for (let f = 0; f < featCols.length; f++) {
-      let perm = [...test];
-      // Build a permuted column
+      const perm = test;
       const colVals = test.map((r) => r.x[f]);
-      // Shuffle deterministically
       let s2 = 7 + f;
       const rng = () => { s2 = (s2 * 9301 + 49297) % 233280; return s2 / 233280; };
-      const shuffled = [...colVals].sort(() => rng() - 0.5);
+      const shuffledCol = shuffle(colVals, rng);
       let permCorrect = 0;
       perm.forEach((r, k) => {
-        const xs = [...r.x]; xs[f] = shuffled[k];
+        const xs = [...r.x]; xs[f] = shuffledCol[k];
         if (predict(xs) === String(r.y)) permCorrect++;
       });
       const permAcc = perm.length ? permCorrect / perm.length : 0;
@@ -421,7 +466,7 @@ Deno.serve(async (req) => {
       });
     }
     console.error("compute-tools error:", e);
-    return new Response(JSON.stringify({ error: e instanceof Error ? e.message : "Unknown" }), {
+    return new Response(JSON.stringify({ error: "Compute tool failed. Please try again." }), {
       status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }

@@ -292,7 +292,7 @@ serve(async (req) => {
   } catch (e) {
     console.error("datum-chat error:", e);
     return new Response(
-      JSON.stringify({ error: e instanceof Error ? e.message : "Unknown error" }),
+      JSON.stringify({ error: "Chat service failed. Please try again." }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
@@ -303,8 +303,8 @@ function buildSystemPrompt(ctx: any): string {
     return PROMPT_NO_DATASET;
   }
 
-  const { fileName, rowCount, colCount, healthScore, profile, correlations, sampleData, advancedContext } = ctx;
-  // sampleData is now optional; tool-calling provides real numbers on demand.
+  const { fileName, rowCount, colCount, healthScore, profile, correlations, advancedContext } = ctx;
+  // Sample data is intentionally never sent — all numbers come from tool calls.
 
   const sizeCategory = rowCount < 100 ? 'small' : rowCount < 1000 ? 'medium' : rowCount < 10000 ? 'large' : 'very_large';
 
@@ -360,11 +360,6 @@ ${profileStr}
 ## Correlations (|r| > 0.4)
 ${corrStr}
 ${advancedStr}
-
-## Sample Data (first rows)
-\`\`\`json
-${JSON.stringify(sampleData?.slice(0, 50) || [], null, 1)}
-\`\`\`
 
 ${CHAIN_OF_THOUGHT}
 
