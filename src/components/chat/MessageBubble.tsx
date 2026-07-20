@@ -1,7 +1,7 @@
 import type { ChatMessage } from '@/types';
 import ReactMarkdown from 'react-markdown';
 import { ArtifactRenderer } from '@/components/artifacts/ArtifactRenderer';
-import { User, Copy, Check, RefreshCw, Pin, PinOff, ThumbsUp, ThumbsDown } from 'lucide-react';
+import { User, Copy, Check, RefreshCw, Pin, PinOff } from 'lucide-react';
 import { useState } from 'react';
 import { useDatumStore } from '@/store/datum.store';
 import fineseLogo from '@/assets/finese-logo.jpg';
@@ -14,7 +14,6 @@ export function MessageBubble({ message, isPinned, onTogglePin }: {
   const isUser = message.role === 'user';
   const time = new Date(message.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   const [copied, setCopied] = useState(false);
-  const [feedback, setFeedback] = useState<'up' | 'down' | null>(null);
   const { regenerateLastMessage, isAiLoading } = useDatumStore();
 
   const handleCopy = () => {
@@ -73,12 +72,6 @@ export function MessageBubble({ message, isPinned, onTogglePin }: {
               </button>
               <button onClick={() => !isAiLoading && regenerateLastMessage()} disabled={isAiLoading} className="p-1 rounded-md hover:bg-muted text-muted-foreground/50 hover:text-muted-foreground transition-colors disabled:opacity-30" title="Regenerate">
                 <RefreshCw className="w-3 h-3" />
-              </button>
-              <button onClick={() => setFeedback(f => f === 'up' ? null : 'up')} className={`p-1 rounded-md hover:bg-muted transition-colors ${feedback === 'up' ? 'text-primary' : 'text-muted-foreground/50 hover:text-muted-foreground'}`} title="Good response">
-                <ThumbsUp className="w-3 h-3" />
-              </button>
-              <button onClick={() => setFeedback(f => f === 'down' ? null : 'down')} className={`p-1 rounded-md hover:bg-muted transition-colors ${feedback === 'down' ? 'text-destructive' : 'text-muted-foreground/50 hover:text-muted-foreground'}`} title="Poor response">
-                <ThumbsDown className="w-3 h-3" />
               </button>
               {onTogglePin && (
                 <button onClick={onTogglePin} className={`p-1 rounded-md hover:bg-muted transition-colors ${isPinned ? 'text-primary' : 'text-muted-foreground/50 hover:text-muted-foreground'}`} title={isPinned ? 'Unpin' : 'Pin'}>
