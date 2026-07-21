@@ -17,7 +17,7 @@ export function Sidebar() {
       {/* Brand */}
       <div className="px-5 pt-6 pb-5">
         <div className="flex items-center gap-3">
-          <img src={fineseLogo} alt="FINESE AI" className="w-8 h-8 rounded-xl object-cover shadow-sm" />
+          <img src={fineseLogo} alt="FINESE AI" className="w-8 h-8 rounded-xl object-contain shadow-sm" />
           <div>
             <span className="font-display font-extrabold text-foreground text-[17px] tracking-tight">FINESE AI</span>
             <p className="text-[10px] font-medium text-muted-foreground tracking-wide">Intelligent Analytics</p>

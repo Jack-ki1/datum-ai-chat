@@ -10,7 +10,7 @@ export function TypingIndicator() {
       <div className="relative w-8 h-8 shrink-0">
         <span className="absolute inset-0 rounded-xl bg-brand-gradient animate-pulse-ring" aria-hidden />
         <div className="relative w-8 h-8 rounded-xl bg-brand-gradient animate-gradient flex items-center justify-center shadow-sm ring-1 ring-primary/20">
-          <img src={fineseLogo} alt="" className="w-5 h-5 rounded-md object-cover opacity-95" />
+          <img src={fineseLogo} alt="" className="w-5 h-5 rounded-md object-contain opacity-95" />
         </div>
       </div>
       <div className="flex flex-col gap-1.5 pt-1.5">

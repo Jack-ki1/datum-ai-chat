@@ -29,7 +29,7 @@ export function MessageBubble({ message, isPinned, onTogglePin }: {
       <div className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 shadow-sm overflow-hidden ${
         isUser ? 'bg-muted text-muted-foreground' : ''
       }`}>
-        {isUser ? <User className="w-4 h-4" /> : <img src={fineseLogo} alt="FINESE AI" className="w-8 h-8 object-cover" />}
+        {isUser ? <User className="w-4 h-4" /> : <img src={fineseLogo} alt="FINESE AI" className="w-8 h-8 object-contain" />}
       </div>
 
       {/* Content */}
