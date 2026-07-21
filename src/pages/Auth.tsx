@@ -7,7 +7,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
 import { Sparkles } from 'lucide-react';
-import fineseLogo from '@/assets/finese-logo.jpg';
+import fineseLogoAsset from '@/assets/finese-logo.png.asset.json';
+const fineseLogo = fineseLogoAsset.url;
 
 export default function Auth() {
   const { session, loading } = useAuth();
@@ -58,7 +59,7 @@ export default function Auth() {
       <div className="relative w-full max-w-md">
         <div className="flex flex-col items-center mb-8">
           <div className="p-[2px] rounded-2xl bg-gradient-to-br from-primary via-datum-violet to-datum-cyan shadow-lg">
-            <img src={fineseLogo} alt="FINESE AI" className="w-14 h-14 rounded-2xl object-cover" />
+            <img src={fineseLogo} alt="FINESE AI" className="w-14 h-14 rounded-2xl object-contain" />
           </div>
           <h1 className="mt-5 font-display font-extrabold text-3xl tracking-tight text-foreground">
             FINESE <span className="bg-gradient-to-r from-primary to-datum-cyan bg-clip-text text-transparent">AI</span>

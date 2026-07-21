@@ -4,35 +4,36 @@
 
 @layer base {
   :root {
-    --background: 250 25% 98%;
-    --foreground: 250 30% 10%;
+    --background: 0 0% 100%;
+    --foreground: 217 33% 12%;
     --card: 0 0% 100%;
-    --card-foreground: 250 30% 10%;
+    --card-foreground: 217 33% 12%;
     --popover: 0 0% 100%;
-    --popover-foreground: 250 30% 10%;
-    /* Brand primary: deep electric indigo, drawn from the datum-violet family
-       — more distinctive than generic SaaS blue while keeping AA contrast. */
-    --primary: 258 78% 56%;
+    --popover-foreground: 217 33% 12%;
+    /* Brand primary: Finese Data orange (#F97316). */
+    --primary: 24 95% 53%;
     --primary-foreground: 0 0% 100%;
-    --primary-glow: 268 85% 66%;
-    --secondary: 250 25% 93%;
-    --secondary-foreground: 250 30% 10%;
-    --muted: 250 22% 96%;
-    /* Bumped from 220 9% 46% -> 250 12% 38% so it clears WCAG AA (4.5:1)
-       against --background, and its /50 opacity variant still reads. */
-    --muted-foreground: 250 12% 38%;
-    --accent: 199 89% 94%;
-    --accent-foreground: 250 30% 10%;
+    --primary-glow: 32 100% 62%;
+    --secondary: 210 40% 96%;
+    --secondary-foreground: 217 33% 12%;
+    --muted: 210 40% 96%;
+    --muted-foreground: 215 20% 38%;
+    --accent: 24 100% 96%;
+    --accent-foreground: 217 33% 12%;
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
-    --border: 250 20% 90%;
-    --input: 250 20% 90%;
-    --ring: 258 78% 56%;
+    --border: 214 32% 91%;
+    --input: 214 32% 91%;
+    --ring: 24 95% 53%;
     --radius: 0.75rem;
 
-    --datum-surf: 250 22% 96%;
+    /* Brand dark navy from the reference site (#050b18). */
+    --brand-dark: 217 76% 6%;
+    --brand-dark-foreground: 0 0% 100%;
+
+    --datum-surf: 210 40% 96%;
     --datum-raised: 0 0% 100%;
-    --datum-border-2: 250 20% 86%;
+    --datum-border-2: 214 32% 85%;
     --datum-amber: 38 96% 52%;
     --datum-cyan: 199 89% 48%;
     --datum-violet: 258 70% 58%;
@@ -40,49 +41,51 @@
     --datum-red: 0 84% 60%;
     --datum-orange: 14 90% 55%;
     --datum-pink: 330 82% 60%;
-    --datum-text-2: 250 12% 38%;
-    --datum-text-3: 250 15% 68%;
+    --datum-text-2: 215 20% 38%;
+    --datum-text-3: 215 16% 60%;
 
-    /* Brand gradients for logo, streaming state, dropzone glow. */
-    --gradient-brand: linear-gradient(135deg, hsl(258 78% 56%), hsl(330 82% 60%));
-    --gradient-brand-soft: linear-gradient(135deg, hsl(258 78% 56% / 0.12), hsl(199 89% 48% / 0.12));
+    /* Brand gradients: orange sunrise, matching the logo. */
+    --gradient-brand: linear-gradient(135deg, hsl(32 100% 62%), hsl(14 90% 55%));
+    --gradient-brand-soft: linear-gradient(135deg, hsl(24 95% 53% / 0.12), hsl(14 90% 55% / 0.12));
 
     --sidebar-background: 0 0% 100%;
-    --sidebar-foreground: 250 12% 38%;
-    --sidebar-primary: 258 78% 56%;
+    --sidebar-foreground: 215 20% 38%;
+    --sidebar-primary: 24 95% 53%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 250 25% 95%;
-    --sidebar-accent-foreground: 250 30% 10%;
-    --sidebar-border: 250 20% 90%;
-    --sidebar-ring: 258 78% 56%;
+    --sidebar-accent: 210 40% 96%;
+    --sidebar-accent-foreground: 217 33% 12%;
+    --sidebar-border: 214 32% 91%;
+    --sidebar-ring: 24 95% 53%;
   }
 
   .dark {
-    --background: 250 40% 6%;
-    --foreground: 250 15% 95%;
-    --card: 250 40% 9%;
-    --card-foreground: 250 15% 95%;
-    --popover: 250 40% 9%;
-    --popover-foreground: 250 15% 95%;
-    --primary: 262 85% 68%;
-    --primary-foreground: 250 40% 6%;
-    --primary-glow: 275 90% 75%;
-    --secondary: 250 30% 16%;
-    --secondary-foreground: 250 15% 95%;
-    --muted: 250 30% 13%;
-    /* Bumped from 220 9% 56% -> 250 14% 72% for AA on the darker background. */
-    --muted-foreground: 250 14% 72%;
-    --accent: 250 30% 15%;
-    --accent-foreground: 250 15% 95%;
+    --background: 217 76% 6%;
+    --foreground: 210 40% 98%;
+    --card: 217 60% 9%;
+    --card-foreground: 210 40% 98%;
+    --popover: 217 60% 9%;
+    --popover-foreground: 210 40% 98%;
+    --primary: 24 95% 55%;
+    --primary-foreground: 217 76% 6%;
+    --primary-glow: 32 100% 65%;
+    --secondary: 217 40% 14%;
+    --secondary-foreground: 210 40% 98%;
+    --muted: 217 40% 12%;
+    --muted-foreground: 215 20% 72%;
+    --accent: 217 40% 14%;
+    --accent-foreground: 210 40% 98%;
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
-    --border: 250 25% 18%;
-    --input: 250 25% 18%;
-    --ring: 262 85% 68%;
+    --border: 217 40% 18%;
+    --input: 217 40% 18%;
+    --ring: 24 95% 55%;
 
-    --datum-surf: 250 30% 13%;
-    --datum-raised: 250 40% 9%;
-    --datum-border-2: 250 25% 22%;
+    --brand-dark: 217 76% 6%;
+    --brand-dark-foreground: 0 0% 100%;
+
+    --datum-surf: 217 40% 12%;
+    --datum-raised: 217 60% 9%;
+    --datum-border-2: 217 40% 22%;
     --datum-amber: 38 96% 58%;
     --datum-cyan: 199 89% 55%;
     --datum-violet: 258 70% 68%;
@@ -90,20 +93,20 @@
     --datum-red: 0 84% 65%;
     --datum-orange: 14 90% 62%;
     --datum-pink: 330 82% 65%;
-    --datum-text-2: 250 14% 72%;
-    --datum-text-3: 250 15% 40%;
+    --datum-text-2: 215 20% 72%;
+    --datum-text-3: 215 16% 45%;
 
-    --gradient-brand: linear-gradient(135deg, hsl(262 85% 68%), hsl(330 82% 65%));
-    --gradient-brand-soft: linear-gradient(135deg, hsl(262 85% 68% / 0.18), hsl(199 89% 55% / 0.18));
+    --gradient-brand: linear-gradient(135deg, hsl(32 100% 65%), hsl(14 90% 62%));
+    --gradient-brand-soft: linear-gradient(135deg, hsl(24 95% 55% / 0.18), hsl(14 90% 62% / 0.18));
 
-    --sidebar-background: 250 40% 9%;
-    --sidebar-foreground: 250 14% 72%;
-    --sidebar-primary: 262 85% 68%;
-    --sidebar-primary-foreground: 250 40% 6%;
-    --sidebar-accent: 250 30% 15%;
-    --sidebar-accent-foreground: 250 15% 95%;
-    --sidebar-border: 250 25% 18%;
-    --sidebar-ring: 262 85% 68%;
+    --sidebar-background: 217 60% 9%;
+    --sidebar-foreground: 215 20% 72%;
+    --sidebar-primary: 24 95% 55%;
+    --sidebar-primary-foreground: 217 76% 6%;
+    --sidebar-accent: 217 40% 14%;
+    --sidebar-accent-foreground: 210 40% 98%;
+    --sidebar-border: 217 40% 18%;
+    --sidebar-ring: 24 95% 55%;
   }
 }
 
@@ -113,10 +116,11 @@
   }
   body {
     @apply bg-background text-foreground antialiased;
-    font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+    font-family: 'Plus Jakarta Sans', 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
   }
   h1, h2, h3, h4, h5, h6 {
-    font-family: 'Syne', sans-serif;
+    font-family: 'Plus Jakarta Sans', 'Syne', sans-serif;
+    letter-spacing: -0.02em;
   }
   code, pre, .font-mono {
     font-family: 'JetBrains Mono', monospace;

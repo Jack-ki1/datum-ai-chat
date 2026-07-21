@@ -4,7 +4,8 @@ import { ArtifactRenderer } from '@/components/artifacts/ArtifactRenderer';
 import { User, Copy, Check, RefreshCw, Pin, PinOff } from 'lucide-react';
 import { useState } from 'react';
 import { useDatumStore } from '@/store/datum.store';
-import fineseLogo from '@/assets/finese-logo.jpg';
+import fineseLogoAsset from '@/assets/finese-logo.png.asset.json';
+const fineseLogo = fineseLogoAsset.url;
 
 export function MessageBubble({ message, isPinned, onTogglePin }: {
   message: ChatMessage;
@@ -28,7 +29,7 @@ export function MessageBubble({ message, isPinned, onTogglePin }: {
       <div className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 shadow-sm overflow-hidden ${
         isUser ? 'bg-muted text-muted-foreground' : ''
       }`}>
-        {isUser ? <User className="w-4 h-4" /> : <img src={fineseLogo} alt="FINESE AI" className="w-8 h-8 object-cover" />}
+        {isUser ? <User className="w-4 h-4" /> : <img src={fineseLogo} alt="FINESE AI" className="w-8 h-8 object-contain" />}
       </div>
 
       {/* Content */}

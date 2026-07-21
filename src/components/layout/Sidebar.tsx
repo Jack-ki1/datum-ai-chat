@@ -1,7 +1,8 @@
 import { useDatumStore } from '@/store/datum.store';
 import { useNavigate } from 'react-router-dom';
 import { MessageSquare, Database, Plus, Search, BookOpen, LogOut } from 'lucide-react';
-import fineseLogo from '@/assets/finese-logo.jpg';
+import fineseLogoAsset from '@/assets/finese-logo.png.asset.json';
+const fineseLogo = fineseLogoAsset.url;
 import { useAuth } from '@/hooks/useAuth';
 
 export function Sidebar() {
@@ -16,7 +17,7 @@ export function Sidebar() {
       {/* Brand */}
       <div className="px-5 pt-6 pb-5">
         <div className="flex items-center gap-3">
-          <img src={fineseLogo} alt="FINESE AI" className="w-8 h-8 rounded-xl object-cover shadow-sm" />
+          <img src={fineseLogo} alt="FINESE AI" className="w-8 h-8 rounded-xl object-contain shadow-sm" />
           <div>
             <span className="font-display font-extrabold text-foreground text-[17px] tracking-tight">FINESE AI</span>
             <p className="text-[10px] font-medium text-muted-foreground tracking-wide">Intelligent Analytics</p>
