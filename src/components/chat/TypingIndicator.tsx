@@ -1,5 +1,6 @@
 import { useDatumStore } from '@/store/datum.store';
-import fineseLogo from '@/assets/finese-logo.jpg';
+import fineseLogoAsset from '@/assets/finese-logo.png.asset.json';
+const fineseLogo = fineseLogoAsset.url;
 
 export function TypingIndicator() {
   const { isLoaded } = useDatumStore();

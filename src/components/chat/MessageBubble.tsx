@@ -4,7 +4,8 @@ import { ArtifactRenderer } from '@/components/artifacts/ArtifactRenderer';
 import { User, Copy, Check, RefreshCw, Pin, PinOff } from 'lucide-react';
 import { useState } from 'react';
 import { useDatumStore } from '@/store/datum.store';
-import fineseLogo from '@/assets/finese-logo.jpg';
+import fineseLogoAsset from '@/assets/finese-logo.png.asset.json';
+const fineseLogo = fineseLogoAsset.url;
 
 export function MessageBubble({ message, isPinned, onTogglePin }: {
   message: ChatMessage;

@@ -1,7 +1,8 @@
 import { useDatumStore } from '@/store/datum.store';
 import { useNavigate } from 'react-router-dom';
 import { MessageSquare, Database, Plus, Search, BookOpen, LogOut } from 'lucide-react';
-import fineseLogo from '@/assets/finese-logo.jpg';
+import fineseLogoAsset from '@/assets/finese-logo.png.asset.json';
+const fineseLogo = fineseLogoAsset.url;
 import { useAuth } from '@/hooks/useAuth';
 
 export function Sidebar() {
